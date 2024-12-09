@@ -1,1 +1,1 @@
-If you want to play yourself, make sure you have java installed and install the .jar file, then run it using "java -jar YOUR-FILE-PATH-TO/giveaway-chess-1.0-SNAPSHOT.jar"
+If you want to play yourself, make sure you have java installed and install the .jar file, then run it using "java -jar YOUR-FILE-PATH-TO/giveaway-chess-2.0-SNAPSHOT.jar"
