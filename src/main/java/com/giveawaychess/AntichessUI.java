@@ -14,6 +14,7 @@ public class AntichessUI {
     private boolean isBoardFlipped = false;
     private JPanel boardPanel;
     private boolean isBotGame = false;
+    private JButton restartButton;
 
     Player whitePlayer;
     Player blackPlayer;
@@ -123,6 +124,15 @@ public class AntichessUI {
             System.out.println("Board Flipped");
             flipBoard();
         });
+
+        // Add Restart Button
+        restartButton = new JButton("Restart Game");
+        restartButton.addActionListener(e -> restartGame());
+
+        // Create a panel for buttons at the bottom
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.add(flipButton);
+        buttonPanel.add(restartButton);
         
         
         // Add row labels and board buttons
@@ -172,7 +182,7 @@ public class AntichessUI {
 
         mainPanel.add(boardPanel, BorderLayout.CENTER);
         mainPanel.add(scrollPane, BorderLayout.EAST);
-        mainPanel.add(flipButton, BorderLayout.SOUTH);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         frame.add(mainPanel);
         frame.setVisible(true);
@@ -432,4 +442,27 @@ public class AntichessUI {
             }
         }
     }
+    private void restartGame() {
+        // Reset game-related state
+        this.board = new ChessBoard(this);
+        this.player = new Player(Piece.Color.WHITE, false, board);
+    
+        // Reset players
+        this.whitePlayer = new Player(Piece.Color.WHITE, false, board);
+        this.blackPlayer = new Player(Piece.Color.BLACK, false, board);
+    
+        // Start the game again
+        this.gameManager = new GameManager(whitePlayer, blackPlayer);
+        whitePlayer.setGameManager(gameManager);
+        blackPlayer.setGameManager(gameManager);
+    
+        board.startGame();
+    
+        // Clear the history table
+        tableModel.setRowCount(0);
+    
+        // Reset the board and flip back to defaults
+        updateBoard(board.getBoard());
+    }
+    
 }
