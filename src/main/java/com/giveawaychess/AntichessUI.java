@@ -3,6 +3,7 @@ package com.giveawaychess;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 
@@ -287,32 +288,57 @@ public class AntichessUI {
     public void updateBoard(Piece[][] board) {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                Piece piece = board[row][col];;
-                 if (piece != null) {
-                        int index = piece.getType().ordinal() + (piece.getColor() == Piece.Color.WHITE ? 0 : 6); 
-                        boardButtons[row][col].setIcon(scaleImageIcon(pieceImages[index], boardButtons[row][col].getWidth(), boardButtons[row][col].getHeight()));
+                Piece piece = board[row][col];
+                if (piece != null) {
+                    // Construct the key using the piece's type and color
+                    String key = piece.getColor().toString().toLowerCase() + "_" + piece.getType().toString().toLowerCase();
+                    ImageIcon icon = pieceImages.get(key);
+                    
+                    if (icon != null) {
+                        boardButtons[row][col].setIcon(scaleImageIcon(icon, boardButtons[row][col].getWidth(), boardButtons[row][col].getHeight()));
+                    } else {
+                        // Log a warning if the image is missing for the given key
+                        System.err.println("Missing image for key: " + key);
+                        boardButtons[row][col].setIcon(null);
+                    }
                 } else {
-                        boardButtons[row][col].setIcon(null); // Clear icon for empty squares
+                    // Clear the icon for empty squares
+                    boardButtons[row][col].setIcon(null);
                 }
             }
         }
     }
+    
 
-    private ImageIcon[] pieceImages = new ImageIcon[12];
+private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
 
     private void loadImages() {
-        pieceImages[0] = new ImageIcon(getClass().getResource("/resources/white/king.png"));
-        pieceImages[1] = new ImageIcon(getClass().getResource("/resources/white/queen.png"));
-        pieceImages[2] = new ImageIcon(getClass().getResource("/resources/white/rook.png"));
-        pieceImages[3] = new ImageIcon(getClass().getResource("/resources/white/bishop.png"));
-        pieceImages[4] = new ImageIcon(getClass().getResource("/resources/white/knight.png"));      
-        pieceImages[5] = new ImageIcon(getClass().getResource("/resources/white/pawn.png"));
-        pieceImages[6] = new ImageIcon(getClass().getResource("/resources/black/king.png"));
-        pieceImages[7] = new ImageIcon(getClass().getResource("/resources/black/queen.png"));
-        pieceImages[8] = new ImageIcon(getClass().getResource("/resources/black/rook.png"));
-        pieceImages[9] = new ImageIcon(getClass().getResource("/resources/black/bishop.png"));
-        pieceImages[10] = new ImageIcon(getClass().getResource("/resources/black/knight.png"));
-        pieceImages[11] = new ImageIcon(getClass().getResource("/resources/black/pawn.png"));
+
+        // Base folder for images
+        String basePath = "/images/";
+
+        // Piece type and color mappings
+        String[] colors = {"white", "black"};
+        String[] pieceTypes = {"pawn", "rook", "knight", "bishop", "queen", "king"};
+
+        for (String color : colors) {
+            for (String pieceType : pieceTypes) {
+                // Construct the resource path
+                String filePath = basePath + "/" + color + "/" + pieceType + ".png";
+    
+                // Load the image using getResource
+                URL imageUrl = getClass().getResource(filePath);
+    
+                if (imageUrl == null) {
+                    System.err.println("Image not found: " + filePath);
+                    continue; // Skip missing images to avoid crashing
+                }
+    
+                // Load and store the ImageIcon
+                ImageIcon icon = new ImageIcon(imageUrl);
+                pieceImages.put(color + "_" + pieceType, scaleImageIcon(icon, 64, 64));
+            }
+        }
     }
     
 
