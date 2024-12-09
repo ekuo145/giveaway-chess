@@ -230,6 +230,7 @@ public class AntichessUI {
 
     private void flipBoard() {
         isBoardFlipped = !isBoardFlipped;
+        System.out.println("Board Flipped is " + isBoardFlipped);
         boardPanel.removeAll(); // Clear the boardPanel for re-layout
         
         // Re-add the top-left empty corner
@@ -322,18 +323,6 @@ public class AntichessUI {
 
 
     public void resetBoardColors() {
-        if (isBoardFlipped) {
-            for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                // Reset to default colors (e.g., white and gray for a chessboard pattern)
-                if ((row + col) % 2 == 0) {
-                    boardButtons[row][col].setBackground(Color.WHITE);
-                } else {
-                    boardButtons[row][col].setBackground(Color.GRAY);
-                }
-            }
-        }
-        } else {
             for (int row = 0; row < 8; row++) {
                 for (int col = 0; col < 8; col++) {
                     // Reset to default colors (e.g., white and gray for a chessboard pattern)
@@ -345,8 +334,6 @@ public class AntichessUI {
                 }
             }
         }
-        
-    }
 
     public void addMoveToHistory(int startRow, int startCol, int endRow, int endCol) {
         char[] columns = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
