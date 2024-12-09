@@ -301,18 +301,18 @@ public class AntichessUI {
     private ImageIcon[] pieceImages = new ImageIcon[12];
 
     private void loadImages() {
-        pieceImages[0] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/WhiteKing.png");
-        pieceImages[1] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/WhiteQueen.png");
-        pieceImages[2] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/WhiteRook.png");
-        pieceImages[3] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/WhiteBishop.png");
-        pieceImages[4] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/WhiteKnight.png");      
-        pieceImages[5] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/WhitePawn.png");
-        pieceImages[6] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/BlackKing.png");
-        pieceImages[7] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/BlackQueen.png");
-        pieceImages[8] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/BlackRook.png");
-        pieceImages[9] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/BlackBishop.png");
-        pieceImages[10] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/BlackKnight.png");
-        pieceImages[11] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/BlackPawn.png");
+        pieceImages[0] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhiteKing.png");
+        pieceImages[1] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhiteQueen.png");
+        pieceImages[2] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhiteRook.png");
+        pieceImages[3] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhiteBishop.png");
+        pieceImages[4] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhiteKnight.png");      
+        pieceImages[5] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhitePawn.png");
+        pieceImages[6] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackKing.png");
+        pieceImages[7] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackQueen.png");
+        pieceImages[8] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackRook.png");
+        pieceImages[9] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackBishop.png");
+        pieceImages[10] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackKnight.png");
+        pieceImages[11] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackPawn.png");
     }
 
 
