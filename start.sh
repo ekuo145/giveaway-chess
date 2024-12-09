@@ -1,4 +1,4 @@
 #!/bin/bash
-java -jar target/giveaway-chess-1.0-SNAPSHOT.jar
+java -jar target/giveaway-chess-2.01-SNAPSHOT.jar
 
 

@@ -326,8 +326,25 @@ public class AntichessUI {
 
 
     private ImageIcon scaleImageIcon(ImageIcon icon, int width, int height) {
+        if (icon == null) {
+            System.err.println("Icon is null. Cannot scale.");
+            return null; // Or return a default placeholder image if available.
+        }
+    
+        if (width <= 0 || height <= 0) {
+            throw new IllegalArgumentException("Width and height must be positive integers.");
+        }
+    
         Image img = icon.getImage();
+        if (img == null) {
+            System.err.println("Image from icon is null. Cannot scale.");
+            return null;
+        }
+    
+        // Smooth scaling
         Image scaledImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+    
+        // Return a new ImageIcon with the scaled image
         return new ImageIcon(scaledImg);
     }
 
