@@ -13,6 +13,7 @@ public class AntichessUI {
     private boolean isWhiteTurn = true; // Track whose turn it is
     private boolean isBoardFlipped = false;
     private JPanel boardPanel;
+    private boolean isBotGame = false;
 
     Player whitePlayer;
     Player blackPlayer;
@@ -43,6 +44,7 @@ public class AntichessUI {
 
         if (choice == 0) {
             // Play against Bot
+            this.isBotGame = true;
             String[] botOptions = {"Play as White", "Play as Black"};
             int botChoice = JOptionPane.showOptionDialog(
                 null,
@@ -414,13 +416,18 @@ public class AntichessUI {
             if (whitePlayer.isBot()) {
                 whitePlayer.makeRandomMove(boardArray);
             } else {
-                // Wait for human input
+                if (!isBotGame) {
+                    flipBoard();
+                }
             }
         } else if (!isWhiteTurn) {
             if (blackPlayer.isBot()) {
                 blackPlayer.makeRandomMove(boardArray);
                 // System.out.println(isWhiteTurn);
             } else {
+                if (!isBotGame) {
+                    flipBoard();
+                }
                 // Wait for human input
             }
         }
