@@ -4,6 +4,9 @@ FROM openjdk:17-jdk
 # Set the working directory inside the container
 WORKDIR /app
 
+# Set the environment to run in headless mode
+ENV JAVA_OPTS="-Djava.awt.headless=true"
+
 # Copy application files (your built JAR) into the container
 COPY target/giveaway-chess-1.0-SNAPSHOT.jar /app/giveaway-chess.jar
 
