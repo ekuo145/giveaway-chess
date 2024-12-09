@@ -324,7 +324,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         for (String color : colors) {
             for (String pieceType : pieceTypes) {
                 // Construct the resource path
-                String filePath = basePath + "/" + color + "/" + pieceType + ".png";
+                String filePath = basePath + color + "/" + pieceType + ".png";
     
                 // Load the image using getResource
                 URL imageUrl = getClass().getResource(filePath);
