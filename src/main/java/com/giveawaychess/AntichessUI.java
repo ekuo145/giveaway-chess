@@ -301,25 +301,18 @@ public class AntichessUI {
     private ImageIcon[] pieceImages = new ImageIcon[12];
 
     private void loadImages() {
-        try {
-            HashMap<String, ImageIcon> pieceImages = new HashMap<>();
-            
-            String[] pieceTypes = { "pawn", "rook", "knight", "bishop", "queen", "king" };
-            String[] colors = { "white", "black" };
-    
-            for (String color : colors) {
-                for (String type : pieceTypes) {
-                    String key = type + "_" + color; // Create unique keys e.g. "pawn_white", "pawn_black"
-                    String imagePath = "/resources/" + color + "/" + type + ".png";
-                    pieceImages.put(key, new ImageIcon(getClass().getResource(imagePath)));
-                }
-            }
-    
-            System.out.println("Images loaded successfully.");
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error loading images: " + e.getMessage());
-        }
+        pieceImages[0] = new ImageIcon(getClass().getResource("/resources/white/king.png"));
+        pieceImages[1] = new ImageIcon(getClass().getResource("/resources/white/queen.png"));
+        pieceImages[2] = new ImageIcon(getClass().getResource("/resources/white/rook.png"));
+        pieceImages[3] = new ImageIcon(getClass().getResource("/resources/white/bishop.png"));
+        pieceImages[4] = new ImageIcon(getClass().getResource("/resources/white/knight.png"));      
+        pieceImages[5] = new ImageIcon(getClass().getResource("/resources/white/pawn.png"));
+        pieceImages[6] = new ImageIcon(getClass().getResource("/resources/black/king.png"));
+        pieceImages[7] = new ImageIcon(getClass().getResource("/resources/black/queen.png"));
+        pieceImages[8] = new ImageIcon(getClass().getResource("/resources/black/rook.png"));
+        pieceImages[9] = new ImageIcon(getClass().getResource("/resources/black/bishop.png"));
+        pieceImages[10] = new ImageIcon(getClass().getResource("/resources/black/knight.png"));
+        pieceImages[11] = new ImageIcon(getClass().getResource("/resources/black/pawn.png"));
     }
     
 
