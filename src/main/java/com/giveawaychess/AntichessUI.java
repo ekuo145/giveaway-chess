@@ -121,7 +121,7 @@ public class AntichessUI {
          // Add the flip button
          JButton flipButton = new JButton("Flip Board");
         flipButton.addActionListener(e -> {
-            System.out.println("Board Flipped");
+            // System.out.println("Board Flipped");
             flipBoard();
         });
 
@@ -213,7 +213,7 @@ public class AntichessUI {
             Piece movingPiece = board.getPieceAt(selectedSquare[0], selectedSquare[1]);
             Move move = new Move(selectedSquare[0], selectedSquare[1], row, col, movingPiece); // Declare the move variable
             boolean moveSuccessful = board.handleMove(move, gameManager);
-            System.out.println("Move Attempted");
+            // System.out.println("Move Attempted");
             if (moveSuccessful) {
                 addMoveToHistory(selectedSquare[0], selectedSquare[1], row, col);
                 selectedSquare = null; // Reset after a successful move
@@ -221,7 +221,7 @@ public class AntichessUI {
             } else {
                 // Handle invalid move (optional feedback to the user)
                 selectedSquare = null; // Reset after an invalid attempt
-                System.out.println("Move Not Successful");
+                // System.out.println("Move Not Successful");
             }
             resetBoardColors();
         }
@@ -230,7 +230,7 @@ public class AntichessUI {
 
     private void flipBoard() {
         isBoardFlipped = !isBoardFlipped;
-        System.out.println("Board Flipped is " + isBoardFlipped);
+        // System.out.println("Board Flipped is " + isBoardFlipped);
         boardPanel.removeAll(); // Clear the boardPanel for re-layout
         
         // Re-add the top-left empty corner

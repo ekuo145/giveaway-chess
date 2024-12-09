@@ -129,7 +129,7 @@ public class Piece {
         int direction = (color == Color.WHITE) ? 1 : -1;  // White pawns move up (1), Black pawns move down (-1)
     
         if (endRow < 0 || endRow >= board.length) {
-            System.out.println("Invalid move: target row is out of bounds.");
+            // System.out.println("Invalid move: target row is out of bounds.");
             return false;
         }
        

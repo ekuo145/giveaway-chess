@@ -288,7 +288,7 @@ public class ChessBoard {
     public boolean isValidMove(int startRow, int startCol, int endRow, int endCol) {
         // Ensure the starting and ending positions are within the bounds of the board
         if (!isWithinBounds(startRow, startCol) || !isWithinBounds(endRow, endCol)) {
-            System.out.println("Move is out of bounds.");
+            // System.out.println("Move is out of bounds.");
             return false;
         }
     
@@ -542,7 +542,7 @@ public class ChessBoard {
         return true;
         }
 
-        System.out.println("Invalid move.");
+        // System.out.println("Invalid move.");
         return false;
     }
 
