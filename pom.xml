@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.giveawaychess</groupId>
   <artifactId>giveaway-chess</artifactId>
-  <packaging>war</packaging>
+  <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>giveaway-chess Maven Webapp</name>
   <url>http://maven.apache.org</url>
@@ -15,7 +15,20 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  <build>
-    <finalName>giveaway-chess</finalName>
+    <build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-jar-plugin</artifactId>
+      <version>3.2.2</version>
+      <configuration>
+        <archive>
+          <manifest>
+            <mainClass>com.giveawaychess.AntichessGame</mainClass> <!-- Set your Main class here -->
+          </manifest>
+        </archive>
+      </configuration>
+    </plugin>
+  </plugins>
   </build>
 </project>
