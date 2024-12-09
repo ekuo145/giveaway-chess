@@ -3,6 +3,7 @@ package com.giveawaychess;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.List;
 
 public class AntichessUI {
@@ -313,6 +314,8 @@ public class AntichessUI {
         pieceImages[10] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/BlackKnight.png");
         pieceImages[11] = new ImageIcon("/Users/ekuo25/MyScripts/SSP_Anti-Chess/BlackPawn.png");
     }
+
+
 
     private ImageIcon scaleImageIcon(ImageIcon icon, int width, int height) {
         Image img = icon.getImage();
