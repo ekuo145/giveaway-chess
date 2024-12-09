@@ -301,19 +301,27 @@ public class AntichessUI {
     private ImageIcon[] pieceImages = new ImageIcon[12];
 
     private void loadImages() {
-        pieceImages[0] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhiteKing.png");
-        pieceImages[1] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhiteQueen.png");
-        pieceImages[2] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhiteRook.png");
-        pieceImages[3] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhiteBishop.png");
-        pieceImages[4] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhiteKnight.png");      
-        pieceImages[5] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/WhitePawn.png");
-        pieceImages[6] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackKing.png");
-        pieceImages[7] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackQueen.png");
-        pieceImages[8] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackRook.png");
-        pieceImages[9] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackBishop.png");
-        pieceImages[10] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackKnight.png");
-        pieceImages[11] = new ImageIcon("/Users/ekuo25/giveaway-chess/Images/BlackPawn.png");
+        try {
+            HashMap<String, ImageIcon> pieceImages = new HashMap<>();
+            
+            String[] pieceTypes = { "pawn", "rook", "knight", "bishop", "queen", "king" };
+            String[] colors = { "white", "black" };
+    
+            for (String color : colors) {
+                for (String type : pieceTypes) {
+                    String key = type + "_" + color; // Create unique keys e.g. "pawn_white", "pawn_black"
+                    String imagePath = "/resources/" + color + "/" + type + ".png";
+                    pieceImages.put(key, new ImageIcon(getClass().getResource(imagePath)));
+                }
+            }
+    
+            System.out.println("Images loaded successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error loading images: " + e.getMessage());
+        }
     }
+    
 
 
 
