@@ -1,3 +1,4 @@
 #!/bin/bash
-java -jar target/giveaway-chess.war
+java -jar target/giveaway-chess-1.0-SNAPSHOT.jar
+
 
