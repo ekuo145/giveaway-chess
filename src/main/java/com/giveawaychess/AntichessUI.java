@@ -4,8 +4,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class AntichessUI {
     private JButton[][] boardButtons; // 8x8 array of buttons representing the board
@@ -24,6 +26,8 @@ public class AntichessUI {
     
     private ChessBoard board;
     private GameManager gameManager;
+
+    private boolean gameOver = board.isGameOver();
 
     // Constructor to set up the UI
     public AntichessUI() {
@@ -476,7 +480,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
             }
         }
     }
-    private void restartGame() {
+    private void resetGame() {
         // Reset game-related state
         this.board = new ChessBoard(this);
         this.player = new Player(Piece.Color.WHITE, false, board);
@@ -498,5 +502,82 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         // Reset the board and flip back to defaults
         updateBoard(board.getBoard());
     }
+
+    private void restartGame() {
+        // Close the current game window
+        SwingUtilities.getWindowAncestor(boardPanel).dispose(); 
     
+        // Start a new game with a fresh UI (which will trigger the startup selection)
+        SwingUtilities.invokeLater(AntichessUI::new);
+    }
+
+    public void gameWon(Player winner) {
+        gameOver = true;
+        String winnerText = winner.getColor() == Piece.Color.WHITE ? "White Wins!" : "Black Wins!";
+        
+        // Display the winner message
+        JLabel winnerLabel = new JLabel(winnerText, SwingConstants.CENTER);
+        winnerLabel.setFont(new Font("Arial", Font.BOLD, 40));
+        winnerLabel.setForeground(Color.RED);
+        winnerLabel.setOpaque(true);
+        winnerLabel.setBackground(new Color(255, 255, 255, 200)); // Semi-transparent background
+        
+        JPanel overlayPanel = new JPanel();
+        overlayPanel.setLayout(new BorderLayout());
+        overlayPanel.add(winnerLabel, BorderLayout.CENTER);
+        overlayPanel.setOpaque(false);
+    
+        JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(boardPanel);
+        frame.getLayeredPane().add(overlayPanel, JLayeredPane.POPUP_LAYER);
+        overlayPanel.setBounds(0, 0, frame.getWidth(), frame.getHeight());
+    
+        // Start confetti animation
+        startConfettiAnimation(frame);
+    
+        // Optional: Delay before restarting the game
+        Timer restartTimer = new Timer(5000, e -> restartGame());
+        restartTimer.setRepeats(false);
+        restartTimer.start();
+    }
+
+    private void startConfettiAnimation(JFrame frame) {
+        JPanel confettiPanel = new JPanel() {
+            List<Color> colors = List.of(Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.ORANGE, Color.PINK);
+            List<int[]> confetti = new ArrayList<>();
+            Random rand = new Random();
+    
+            {
+                // Generate random confetti positions
+                for (int i = 0; i < 100; i++) {
+                    confetti.add(new int[]{rand.nextInt(frame.getWidth()), rand.nextInt(frame.getHeight()), rand.nextInt(10) + 5});
+                }
+    
+                // Timer to update confetti movement
+                Timer timer = new Timer(50, e -> {
+                    for (int[] c : confetti) {
+                        c[1] += rand.nextInt(5) + 2; // Move confetti down
+                        if (c[1] > frame.getHeight()) {
+                            c[1] = -10; // Reset to top when reaching bottom
+                        }
+                    }
+                    repaint();
+                });
+                timer.start();
+            }
+    
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                for (int[] c : confetti) {
+                    g.setColor(colors.get(rand.nextInt(colors.size())));
+                    g.fillOval(c[0], c[1], c[2], c[2]);
+                }
+            }
+        };
+    
+        confettiPanel.setOpaque(false);
+        confettiPanel.setBounds(0, 0, frame.getWidth(), frame.getHeight());
+    
+        frame.getLayeredPane().add(confettiPanel, JLayeredPane.POPUP_LAYER);
+    }
 }

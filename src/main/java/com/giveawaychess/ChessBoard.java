@@ -14,6 +14,9 @@ public class ChessBoard {
     private static Piece.Color currentPlayer = Piece.Color.WHITE;
     private boolean gameOver = false;
     private AntichessUI ui; // Reference to the UI
+    
+    Player blackPlayer;
+    Player whitePlayer;
 
     Move lastMove;
 
@@ -266,14 +269,6 @@ public class ChessBoard {
         return moves;
     }
     
-    
-    
-
-    private void endGame() {
-        gameOver = true;
-        System.out.println("Thank you for playing! The game has ended.");
-        // You can reset the game here or exit based on your requirements
-    }
 
     public boolean isGameOver() {
         return gameOver;
@@ -434,7 +429,7 @@ public class ChessBoard {
     }
     
 
-    private boolean hasValidMove(Piece.Color playerColor) {
+    public boolean hasValidMove(Piece.Color playerColor) {
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 Piece piece = board[row][col];
@@ -452,7 +447,7 @@ public class ChessBoard {
         return false;  // No valid moves found
     }
 
-    private boolean hasPieces(Piece.Color playerColor) {
+    public boolean hasPieces(Piece.Color playerColor) {
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 Piece piece = board[row][col];
@@ -463,6 +458,30 @@ public class ChessBoard {
         }
         return false;  // No pieces left for the player
     }
+
+    public void checkGameEnd() {
+        // Check if the current player has any valid moves
+        if (!hasValidMove(currentPlayer)) {
+            System.out.println("Player " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " has no valid moves left!");
+            System.out.println("Game over! " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " wins!");
+            
+            // Determine the winner (opposite of the current player)
+            Player winner = (currentPlayer == Piece.Color.WHITE) ? blackPlayer : whitePlayer;
+            ui.gameWon(winner);
+            return;
+        }
+    
+        // Check if the current player has any pieces left
+        if (!hasPieces(currentPlayer)) {
+            System.out.println("Player " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " has no pieces left!");
+            System.out.println("Game over! " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " wins!");
+            
+            // Determine the winner (opposite of the current player)
+            Player winner = (currentPlayer == Piece.Color.WHITE) ? blackPlayer : whitePlayer;
+            ui.gameWon(winner);
+            return;
+        }
+    }
     
     public void switchPlayer() {
         currentPlayer = (currentPlayer == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
@@ -472,23 +491,7 @@ public class ChessBoard {
         System.out.println("It's " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + "'s turn.");
     }
 
-    private void checkGameEnd() {
-        // Check if the current player has any valid moves
-        if (!hasValidMove(currentPlayer)) {
-            System.out.println("Player " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " has no valid moves left!");
-            System.out.println("Game over! " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " wins!");
-            endGame();
-            return;
-        }
     
-        // Check if the current player has any pieces left
-        if (!hasPieces(currentPlayer)) {
-            System.out.println("Player " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " has no pieces left!");
-            System.out.println("Game over! " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " wins!");
-            endGame();
-            return;
-        }
-    }
     
     public void startGame() {
         ui.updateBoard(board);
