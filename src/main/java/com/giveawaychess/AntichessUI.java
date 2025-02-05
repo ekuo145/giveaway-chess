@@ -19,6 +19,7 @@ public class AntichessUI {
     private JPanel boardPanel;
     private boolean isBotGame = false;
     private JButton restartButton;
+    private boolean showLegalMoves = true;
 
     Player whitePlayer;
     Player blackPlayer;
@@ -134,17 +135,20 @@ public class AntichessUI {
         restartButton.addActionListener(e -> resetGame());
 
         // Add Help Button
-        JButton helpButton = new JButton("Help");
+        JButton helpButton = new JButton("Rules");
         helpButton.addActionListener(e -> showHelpDialog());
+
+        // Add Toggle Legal Moves Button
+        JButton toggleLegalMovesButton = new JButton("Toggle Legal Moves");
+        toggleLegalMovesButton.addActionListener(e -> toggleLegalMoves());
 
         // Create a panel for buttons at the bottom
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(flipButton);
         buttonPanel.add(restartButton);
         buttonPanel.add(helpButton);
+        buttonPanel.add(toggleLegalMovesButton);
 
-        
-        
         // Add row labels and board buttons
         for (int row = 0; row < 8; row++) {
             // Add row label on the left side
@@ -207,7 +211,9 @@ public class AntichessUI {
             Piece targetPiece = board.getPieceAt(row, col);
             List<int[]> validMoves = board.getValidMoves(row, col);
             // System.out.println(validMoves);
-            highlightMoves(validMoves);
+            if (showLegalMoves == true) {
+                highlightMoves(validMoves);
+            }
             if (movingPiece == null) {
                 // System.out.println("No piece at this square");
                 selectedSquare = null;
@@ -439,6 +445,13 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         }   
         isWhiteTurn = !isWhiteTurn; // Toggle turn
     }
+    
+    private void toggleLegalMoves() {
+        showLegalMoves = !showLegalMoves;
+        if (!showLegalMoves) {
+            resetBoardColors();
+        }
+    }
 
     public void highlightMoves(List<int[]> validMoves) {
         // Reset the board first
@@ -446,13 +459,13 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         // System.out.println("Board Colors Reset");
         
         // Highlight the valid moves
-        for (int[] move : validMoves) {
-            int row = move[0];
-            int col = move[1];
-            boardButtons[row][col].setBackground(Color.GREEN); // Use green for valid moves
-            // System.out.println("Background Colors set to Green");
-        }
-    }
+            for (int[] move : validMoves) {
+                int row = move[0];
+                int col = move[1];
+                boardButtons[row][col].setBackground(Color.GREEN); // Use green for valid moves
+                // System.out.println("Background Colors set to Green");
+            }
+        } 
 
     public void onMoveMade() {
         if (this.board == null) {
