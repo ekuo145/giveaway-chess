@@ -14,7 +14,7 @@ public class ChessBoard {
     private static Piece.Color currentPlayer = Piece.Color.WHITE;
     private boolean gameOver = false;
     private AntichessUI ui; // Reference to the UI
-    
+
     Player blackPlayer;
     Player whitePlayer;
 
@@ -461,6 +461,8 @@ public class ChessBoard {
 
     public void checkGameEnd() {
         // Check if the current player has any valid moves
+        blackPlayer = ui.blackPlayer;
+        whitePlayer = ui.whitePlayer;
         if (!hasValidMove(currentPlayer)) {
             System.out.println("Player " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " has no valid moves left!");
             System.out.println("Game over! " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " wins!");
@@ -494,6 +496,7 @@ public class ChessBoard {
     
     
     public void startGame() {
+        gameOver = false;
         ui.updateBoard(board);
     }
     
@@ -602,12 +605,12 @@ private List<Move> moveHistory = new ArrayList<>();
         }
 
         // Set up white pawns
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 1; i++) {
             board[6][i] = new Piece(Piece.PieceType.PAWN, Piece.Color.WHITE);
         }
 
         // Set up black pawns
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 1; i++) {
             board[1][i] = new Piece(Piece.PieceType.PAWN, Piece.Color.BLACK);
         }
         printBoard();

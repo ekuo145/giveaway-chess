@@ -27,8 +27,6 @@ public class AntichessUI {
     private ChessBoard board;
     private GameManager gameManager;
 
-    private boolean gameOver = board.isGameOver();
-
     // Constructor to set up the UI
     public AntichessUI() {
         initializeUI(); // Create and set up the GUI
@@ -133,12 +131,18 @@ public class AntichessUI {
 
         // Add Restart Button
         restartButton = new JButton("Restart Game");
-        restartButton.addActionListener(e -> restartGame());
+        restartButton.addActionListener(e -> resetGame());
+
+        // Add Help Button
+        JButton helpButton = new JButton("Help");
+        helpButton.addActionListener(e -> showHelpDialog());
 
         // Create a panel for buttons at the bottom
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(flipButton);
         buttonPanel.add(restartButton);
+        buttonPanel.add(helpButton);
+
         
         
         // Add row labels and board buttons
@@ -495,7 +499,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         blackPlayer.setGameManager(gameManager);
     
         board.startGame();
-    
+
         // Clear the history table
         tableModel.setRowCount(0);
     
@@ -504,16 +508,39 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
     }
 
     private void restartGame() {
-        // Close the current game window
-        SwingUtilities.getWindowAncestor(boardPanel).dispose(); 
-    
-        // Start a new game with a fresh UI (which will trigger the startup selection)
+        // Close the current game window properly
+        JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(boardPanel);
+        if (currentFrame != null) {
+            currentFrame.dispose();
+        }
         SwingUtilities.invokeLater(AntichessUI::new);
-    }
+    
+        // Reset game state variables
+        isWhiteTurn = true; // Ensure White starts
+        selectedSquare = null; // Reset selected square
+        isBoardFlipped = false; // Reset board orientation
+        isBotGame = false; // Ensure correct bot behavior
+    
+        // Reinitialize board and players
+        board = new ChessBoard(this);
+        whitePlayer = new Player(Piece.Color.WHITE, false, board);
+        blackPlayer = new Player(Piece.Color.BLACK, false, board);
+    
+        // Reinitialize GameManager
+        gameManager = new GameManager(whitePlayer, blackPlayer);
+        whitePlayer.setGameManager(gameManager);
+        blackPlayer.setGameManager(gameManager);
+    
+        // Ensure UI resets correctly
+        tableModel.setRowCount(0); // Clear move history
+        updateBoard(board.getBoard()); // Refresh UI with new board
+    
+        // Start the game and ensure movement works
+        board.startGame();
+    } 
 
     public void gameWon(Player winner) {
-        gameOver = true;
-        String winnerText = winner.getColor() == Piece.Color.WHITE ? "White Wins!" : "Black Wins!";
+        String winnerText = winner.getColor() == Piece.Color.WHITE ? "Black Wins!" : "White Wins!";
         
         // Display the winner message
         JLabel winnerLabel = new JLabel(winnerText, SwingConstants.CENTER);
@@ -535,7 +562,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         startConfettiAnimation(frame);
     
         // Optional: Delay before restarting the game
-        Timer restartTimer = new Timer(5000, e -> restartGame());
+        Timer restartTimer = new Timer(5000, e -> resetGame());
         restartTimer.setRepeats(false);
         restartTimer.start();
     }
@@ -580,4 +607,16 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
     
         frame.getLayeredPane().add(confettiPanel, JLayeredPane.POPUP_LAYER);
     }
+    
+    private void showHelpDialog() {
+        String rules = "Giveaway Chess Rules:\n" +
+                "1. The goal is to lose all your pieces or be unable to move.\n" +
+                "2. Capturing is mandatory if a capture move is available.\n" +
+                "3. The king has no special significance; there is no check or checkmate.\n" +
+                "4. Pawn promotion works as usual, but queening is often a disadvantage.\n" +
+                "5. If a player has no legal moves, they win the game.";
+        
+        JOptionPane.showMessageDialog(null, rules, "Giveaway Chess Rules", JOptionPane.INFORMATION_MESSAGE);
+    }
+
 }
