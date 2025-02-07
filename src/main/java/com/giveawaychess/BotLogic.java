@@ -1,6 +1,7 @@
 package com.giveawaychess;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class BotLogic {
@@ -146,4 +147,91 @@ public class BotLogic {
         }
         return bestMove;
     }
+
+    public Move getMostAggressiveMove(ChessBoard board, Piece.Color playerColor) {
+        List<Move> legalMoves = getAllValidMoves(playerColor);
+        Move bestMove = null;
+        int maxCaptureValue = -1;
+    
+        for (Move move : legalMoves) {
+            if (board.isCaptureMove(move.getFromRow(), move.getFromCol(), move.getToRow(), move.getToCol())) {
+                int pieceValue = getPieceValue(board.getPieceAt(move.getFromRow(), move.getFromCol()));
+                if (pieceValue > maxCaptureValue) {
+                    maxCaptureValue = pieceValue;
+                    bestMove = move;
+                }
+            }
+        }
+        return bestMove != null ? bestMove : getBestMove(board, playerColor, 2);  // Fallback to normal search
+    }
+
+    private int evaluateBoardDefensive(ChessBoard board, Piece.Color playerColor) {
+        int score = 0;
+    
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board.getPieceAt(row, col);
+                if (piece != null && piece.getColor() == playerColor) {
+                    score += getPieceValue(piece);
+                    if (board.isPieceHanging(row, col)) {
+                        score += 2;  // Extra penalty for vulnerable pieces
+                    }
+                }
+            }
+        }
+        return score;
+    }
+
+    public Move getRandomMove(ChessBoard board, Piece.Color playerColor) {
+        List<Move> legalMoves = getAllValidMoves(playerColor);
+        if (legalMoves.isEmpty()) return null;
+    
+        Collections.shuffle(legalMoves);
+        for (Move move : legalMoves) {
+            if (board.isCaptureMove(move.getFromRow(), move.getFromCol(), move.getToRow(), move.getToCol())) {
+                return move;
+            }
+        }
+        return legalMoves.get(0);
+    }
+    
+
+    private int minimaxSacrificial(ChessBoard board, int depth, int alpha, int beta, boolean isMaximizing, Piece.Color playerColor) {
+        if (depth == 0 || board.isGameOver()) {
+            return evaluateBoard(board, playerColor);
+        }
+    
+        List<Move> legalMoves = getAllValidMoves(playerColor);
+        legalMoves.sort((m1, m2) -> board.isCaptureMove(m2.getFromRow(), m2.getFromCol(), m2.getToRow(), m2.getToCol()) ? 1 : -1);
+    
+        int bestEval = isMaximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+    
+        for (Move move : legalMoves) {
+            board.handleMove(move, null);
+            int eval = minimaxSacrificial(board, depth - 1, alpha, beta, !isMaximizing, playerColor);
+            board.undoMove(move);
+    
+            if (isMaximizing) {
+                bestEval = Math.max(bestEval, eval);
+                alpha = Math.max(alpha, eval);
+            } else {
+                bestEval = Math.min(bestEval, eval);
+                beta = Math.min(beta, eval);
+            }
+            if (beta <= alpha) break;
+        }
+        return bestEval;
+    }
+
+    public Move getAdaptiveMove(ChessBoard board, Piece.Color playerColor) {
+        int pieceCount = board.countPieces(playerColor);
+        if (pieceCount > 10) {
+            return getMostAggressiveMove(board, playerColor);
+        } else if (pieceCount < 5) {
+            return getBestMove(board, playerColor, 3);
+        } else {
+            return getRandomMove(board, playerColor);
+        }
+    }
+    
 }
