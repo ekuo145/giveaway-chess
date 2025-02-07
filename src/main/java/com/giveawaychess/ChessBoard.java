@@ -3,6 +3,8 @@ package com.giveawaychess;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import com.giveawaychess.Piece.PieceType;
+
 import java.util.List;
 import java.util.Random;
 import java.util.ArrayList;
@@ -577,8 +579,40 @@ private List<Move> moveHistory = new ArrayList<>();
         return moveHistory.get(moveHistory.size() - 1);
     }
 
+    public void undoMove(Move lastMove) {
+        if (lastMove == null) return;
+    
+        // Get the move details
+        int startRow = lastMove.getFromRow();
+        int startCol = lastMove.getFromCol();
+        int endRow = lastMove.getToRow();
+        int endCol = lastMove.getToCol();
+        Piece movedPiece = lastMove.getMovedPiece();
+        Piece capturedPiece = lastMove.getCapturedPiece(); // Store what was captured
+    
+        // Move the piece back to its original position
+        board[startRow][startCol] = movedPiece;
+        board[endRow][endCol] = capturedPiece; // Restore captured piece (if any)
+    
+        // If the moved piece was a pawn that had been promoted, revert it back to a pawn
+        if (lastMove.wasPromotion()) {
+            board[startRow][startCol] = new Piece(PieceType.PAWN, movedPiece.getColor());
+        }
+    
+        // Restore turn
+        currentPlayer = (currentPlayer == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
+    }
+    
+
     // Add this method to record a move after it's successfully made
     private void recordMove(int startRow, int startCol, int endRow, int endCol, Piece piece) {
+    Piece capturedPiece = board[endRow][endCol]; // Get the captured piece (if any)
+    
+    // Check if this move results in a pawn promotion
+    boolean promotion = (piece.getType() == Piece.PieceType.PAWN && 
+                         ((piece.getColor() == Piece.Color.WHITE && endRow == 7) || 
+                          (piece.getColor() == Piece.Color.BLACK && endRow == 0)));
+
         Move move = new Move(startRow, startCol, endRow, endCol, piece);
         moveHistory.add(move);
     }

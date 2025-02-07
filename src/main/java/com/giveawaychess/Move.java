@@ -6,6 +6,8 @@ public class Move {
     int endRow;
     int endCol;
     Piece movedPiece;
+    private Piece capturedPiece; // Store the piece that was captured
+    private boolean promotion;
 
     public Move(int startRow, int startCol, int endRow, int endCol, Piece movedPiece) {
         this.startRow = startRow;
@@ -13,6 +15,8 @@ public class Move {
         this.endRow = endRow;
         this.endCol = endCol;
         this.movedPiece = movedPiece;
+        this.capturedPiece = capturedPiece;
+        this.promotion = promotion;
     }
 
     public boolean isPawnMove() {
@@ -43,4 +47,13 @@ public class Move {
     public Piece getMovedPiece() {
         return movedPiece;
     }
+
+    public Piece getCapturedPiece() {
+        return capturedPiece;
+    }
+
+    public boolean wasPromotion() {
+        return promotion;
+    }
+
 }
