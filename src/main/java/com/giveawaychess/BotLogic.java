@@ -7,6 +7,37 @@ import java.util.List;
 public class BotLogic {
     private ChessBoard board;
 
+    private BotType botType;  // Declare botType variable
+
+    public enum BotType {
+        AGGRESSIVE, DEFENSIVE, RANDOM, SACRIFICIAL, HYBRID, SWEATY
+    }
+
+    // Constructor to initialize botType and board
+    public BotLogic(ChessBoard board, BotType botType) {
+        this.board = board;
+        this.botType = botType;
+    }
+
+    public Move getMove() {
+        switch (botType) {
+            case AGGRESSIVE:
+                return getMostAggressiveMove(board, Piece.Color.WHITE); // Ensure method exists
+            case DEFENSIVE:
+                return getDefensiveMove(board, Piece.Color.WHITE, 3);
+            case RANDOM:
+                return getRandomMove(board, Piece.Color.WHITE);
+            case SACRIFICIAL:
+                return getSacrificialMove(board, Piece.Color.WHITE, 3);
+            case HYBRID:
+                return getAdaptiveMove(board, Piece.Color.WHITE);
+            case SWEATY:
+                return getBestMove(board, Piece.Color.WHITE, 3);
+            default:
+                return getRandomMove(board, Piece.Color.WHITE);
+        }
+    }
+
     private int evaluateBoard(ChessBoard board, Piece.Color playerColor) {
         int score = 0;
         for (int row = 0; row < 8; row++) {
@@ -31,7 +62,7 @@ public class BotLogic {
         return score;
     }
 
-    private List<Move> getAllValidMoves(Piece.Color opponentColor) {
+    public List<Move> getAllValidMoves(Piece.Color opponentColor) {
         List<Move> allValidMoves = new ArrayList<>();
         
         for (int row = 0; row < 8; row++) {
@@ -67,32 +98,34 @@ public class BotLogic {
         }
     }
 
-    private int minimax (ChessBoard board, int depth, boolean isMaximizing, Piece.Color playerColor) {
+    private int minimax(ChessBoard board, int depth, boolean isMaximizing, Piece.Color playerColor, boolean isDefensive) {
         if (depth == 0 || board.isGameOver()) {
-            return evaluateBoard(board, playerColor);
+            return isDefensive ? evaluateBoardDefensive(board, playerColor) : evaluateBoard(board, playerColor);
         }
+    
         List<Move> legalMoves = getAllValidMoves(playerColor);
-
-        if (isMaximizing) {  // Opponent’s turn (tries to keep pieces)
+    
+        if (isMaximizing) {  // Opponent’s turn (tries to keep pieces in defensive mode)
             int maxEval = Integer.MIN_VALUE;
             for (Move move : legalMoves) {
                 board.handleMove(move, null);
-                int eval = minimax(board, depth - 1, false, playerColor);
+                int eval = minimax(board, depth - 1, false, playerColor, isDefensive);
                 board.undoMove(move);
                 maxEval = Math.max(maxEval, eval);
             }
             return maxEval;
-        } else {  // Bot’s turn (tries to lose pieces)
+        } else {  // Bot’s turn (tries to lose pieces in normal mode)
             int minEval = Integer.MAX_VALUE;
             for (Move move : legalMoves) {
                 board.handleMove(move, null);
-                int eval = minimax(board, depth - 1, true, playerColor);
+                int eval = minimax(board, depth - 1, true, playerColor, isDefensive);
                 board.undoMove(move);
                 minEval = Math.min(minEval, eval);
             }
             return minEval;
         }
     }
+    
 
     private int minimaxAlphaBeta(ChessBoard board, int depth, int alpha, int beta, boolean isMaximizing, Piece.Color playerColor) {
         if (depth == 0 || board.isGameOver()) {
@@ -182,6 +215,26 @@ public class BotLogic {
         return score;
     }
 
+    public Move getDefensiveMove(ChessBoard board, Piece.Color playerColor, int depth) {
+        List<Move> legalMoves = getAllValidMoves(playerColor);
+        Move bestMove = null;
+        int bestEval = Integer.MIN_VALUE; // Defensive bot wants the highest board score
+    
+        for (Move move : legalMoves) {
+            board.handleMove(move, null);
+            int eval = minimax(board, depth - 1, false, playerColor, true); // Now passes `true` for defensive eval
+            board.undoMove(move);
+    
+            if (eval > bestEval) {
+                bestEval = eval;
+                bestMove = move;
+            }
+        }
+        return bestMove;
+    }
+    
+    
+
     public Move getRandomMove(ChessBoard board, Piece.Color playerColor) {
         List<Move> legalMoves = getAllValidMoves(playerColor);
         if (legalMoves.isEmpty()) return null;
@@ -222,6 +275,25 @@ public class BotLogic {
         }
         return bestEval;
     }
+
+    public Move getSacrificialMove(ChessBoard board, Piece.Color playerColor, int depth) {
+        List<Move> legalMoves = getAllValidMoves(playerColor);
+        Move bestMove = null;
+        int bestEval = Integer.MAX_VALUE; // Sacrificial bot wants the lowest score (to lose pieces)
+    
+        for (Move move : legalMoves) {
+            board.handleMove(move, null);
+            int eval = minimaxSacrificial(board, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false, playerColor);
+            board.undoMove(move);
+    
+            if (eval < bestEval) {
+                bestEval = eval;
+                bestMove = move;
+            }
+        }
+        return bestMove;
+    }
+    
 
     public Move getAdaptiveMove(ChessBoard board, Piece.Color playerColor) {
         int pieceCount = board.countPieces(playerColor);

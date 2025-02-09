@@ -16,6 +16,7 @@ public class ChessBoard {
     private static Piece.Color currentPlayer = Piece.Color.WHITE;
     private boolean gameOver = false;
     private AntichessUI ui; // Reference to the UI
+    private BotLogic bot;
 
     Player blackPlayer;
     Player whitePlayer;
@@ -653,5 +654,36 @@ private List<Move> moveHistory = new ArrayList<>();
     public Piece[][] getBoardArray() {
         return board;
     }
+
+    public boolean isPieceHanging(int row, int col) {
+        Piece piece = getPieceAt(row, col);
+        if (piece == null) return false; // No piece to check
+    
+        Piece.Color opponentColor = (piece.getColor() == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
+        List<Move> opponentMoves = bot.getAllValidMoves(opponentColor);
+    
+        for (Move move : opponentMoves) {
+            if (move.getToRow() == row && move.getToCol() == col) {
+                return true; // Opponent can capture this piece
+            }
+        }
+        return false;
+    }
+
+    public int countPieces(Piece.Color playerColor) {
+        int count = 0;
+    
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = getPieceAt(row, col);
+                if (piece != null && piece.getColor() == playerColor) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+    
+    
 
 }
