@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Chessboard UI</title>
+            <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="chessboard">
+        
+        
+        <script>
+            const isLiveServer = window.location.hostname === "127.0.0.1"; // Check if running on Live Server
+            const basePath = isLiveServer ? "/images" : "/giveaway-chess Maven Webapp/images";
+
+document.addEventListener("DOMContentLoaded", function () {
+    const board = document.querySelector(".chessboard");
+
+    const pieceSetup = [
+                "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook",
+                "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn",
+                "", "", "", "", "", "", "", "",
+                "", "", "", "", "", "", "", "",
+                "", "", "", "", "", "", "", "",
+                "", "", "", "", "", "", "", "",
+                "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn",
+                "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook"
+            ];
+
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            const square = document.createElement("div");
+            square.classList.add("square", (row + col) % 2 === 0 ? "light" : "dark");
+
+            if (pieceSetup[row][col]) {
+                const img = document.createElement("img");
+                const color = row < 2 ? "black" : row > 5 ? "white" : "";
+
+                if (color) {
+                    img.src = `${basePath}/${color}/${pieceSetup[row][col]}.png`;
+                    console.log(pieceSetup[row][col])
+                    img.alt = `${color} ${pieceSetup[row][col]}`;
+                    img.onerror = () => console.error("Image not found:", img.src);
+                    console.log("Loading image:", img.src);
+                    square.appendChild(img);
+                }
+            }
+            board.appendChild(square);
+        }
+    }
+});
+        </script>
+    </div>
+</body>
+</html>
