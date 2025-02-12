@@ -12,10 +12,11 @@
         
         <script>
             const isLiveServer = window.location.hostname === "127.0.0.1"; // Check if running on Live Server
-            const basePath = isLiveServer ? "/images" : "/giveaway-chess Maven Webapp/images";
+            const basePath = isLiveServer ? "images" : "/giveaway-chess Maven Webapp/images";
 
 document.addEventListener("DOMContentLoaded", function () {
     const board = document.querySelector(".chessboard");
+    let selectedSquare = null; 
 
     const pieceSetup = [
                 "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook",
@@ -33,19 +34,29 @@ document.addEventListener("DOMContentLoaded", function () {
             const square = document.createElement("div");
             square.classList.add("square", (row + col) % 2 === 0 ? "light" : "dark");
 
-            if (pieceSetup[row][col]) {
+            const index = row * 8 + col;
+            if (pieceSetup[index]) {
                 const img = document.createElement("img");
                 const color = row < 2 ? "black" : row > 5 ? "white" : "";
 
                 if (color) {
-                    img.src = `${basePath}/${color}/${pieceSetup[row][col]}.png`;
-                    console.log(pieceSetup[row][col])
-                    img.alt = `${color} ${pieceSetup[row][col]}`;
+                    img.src = `${basePath}/${color}/${pieceSetup[index]}.png`;
+                    console.log(pieceSetup[index]); // Correctly logs "rook"
+                    img.alt = `${color} ${pieceSetup[index]}`;
                     img.onerror = () => console.error("Image not found:", img.src);
                     console.log("Loading image:", img.src);
                     square.appendChild(img);
                 }
             }
+            // Click event to highlight the selected square
+            square.addEventListener("click", () => {
+                if (selectedSquare) {
+                    selectedSquare.classList.remove("selected"); // Remove previous selection
+                }
+                selectedSquare = square;
+                square.classList.add("selected");
+            });
+            
             board.appendChild(square);
         }
     }
