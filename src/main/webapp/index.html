@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Chessboard UI</title>
-            <link rel="stylesheet" href="styles.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chessboard UI</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="chessboard">
-        
-        
-        <script>
-            const isLiveServer = window.location.hostname === "127.0.0.1"; // Check if running on Live Server
-            const basePath = isLiveServer ? "images" : "/giveaway-chess Maven Webapp/images";
+    <script>
+        const isLiveServer = window.location.hostname === "127.0.0.1"; // Check if running on Live Server
+        const basePath = isLiveServer ? "images" : "/giveaway-chess Maven Webapp/images";
 
-document.addEventListener("DOMContentLoaded", function () {
-    const board = document.querySelector(".chessboard");
-    let selectedSquare = null; 
+        document.addEventListener("DOMContentLoaded", function () {
+            const board = document.querySelector(".chessboard");
+            let selectedSquare = null; 
+            let selectedPiece = null;
+            let currentTurn = "white";
 
-    const pieceSetup = [
+            const pieceSetup = [
                 "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook",
                 "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn",
                 "", "", "", "", "", "", "", "",
@@ -29,39 +29,76 @@ document.addEventListener("DOMContentLoaded", function () {
                 "rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook"
             ];
 
-    for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 8; col++) {
-            const square = document.createElement("div");
-            square.classList.add("square", (row + col) % 2 === 0 ? "light" : "dark");
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement("div");
+                    square.classList.add("square", (row + col) % 2 === 0 ? "light" : "dark");
+                    square.dataset.row = row;
+                    square.dataset.col = col;
 
-            const index = row * 8 + col;
-            if (pieceSetup[index]) {
-                const img = document.createElement("img");
-                const color = row < 2 ? "black" : row > 5 ? "white" : "";
+                    const index = row * 8 + col;
+                    if (pieceSetup[index]) {
+                        const img = document.createElement("img");
+                        const color = row < 2 ? "black" : row > 5 ? "white" : "";
 
-                if (color) {
-                    img.src = `${basePath}/${color}/${pieceSetup[index]}.png`;
-                    console.log(pieceSetup[index]); // Correctly logs "rook"
-                    img.alt = `${color} ${pieceSetup[index]}`;
-                    img.onerror = () => console.error("Image not found:", img.src);
-                    console.log("Loading image:", img.src);
-                    square.appendChild(img);
+                        if (color) {
+                            img.src = `${basePath}/${color}/${pieceSetup[index]}.png`;
+                            img.alt = `${color} ${pieceSetup[index]}`;
+                            img.classList.add("piece");
+                            img.dataset.color = color;
+                            img.dataset.type = pieceSetup[index];
+                            img.onerror = () => console.error("Image not found:", img.src);
+                            square.appendChild(img);
+                        }
+                    }
+
+                    square.addEventListener("click", () => {
+                        if (selectedSquare && selectedPiece) {
+                            if (isValidMove(selectedSquare, square)) {
+                                movePiece(selectedSquare, square);
+                                currentTurn = currentTurn === "white" ? "black" : "white";
+                            } else {
+                                resetSelection();
+                            }
+                        } else if (square.firstChild && square.firstChild.dataset.color === currentTurn) {
+                            selectPiece(square);
+                        }
+                    });
+
+                    function selectPiece(square) {
+                        if (selectedSquare) {
+                            selectedSquare.classList.remove("selected");
+                        }
+                        selectedSquare = square;
+                        selectedPiece = square.firstChild;
+                        square.classList.add("selected");
+                    }
+
+                    function movePiece(fromSquare, toSquare) {
+                        if (toSquare.firstChild) {
+                            toSquare.removeChild(toSquare.firstChild); // Capture logic
+                        }
+                        toSquare.appendChild(selectedPiece);
+                        fromSquare.classList.remove("selected");
+                        resetSelection();
+                    }
+
+                    function isValidMove(fromSquare, toSquare) {
+                        if (toSquare.firstChild && toSquare.firstChild.dataset.color === selectedPiece.dataset.color) {
+                            return false;
+                        }
+                        return true; // Basic move validation for now
+                    }
+
+                    function resetSelection() {
+                        selectedSquare = null;
+                        selectedPiece = null;
+                    }
+                    board.appendChild(square);
                 }
-            }
-            // Click event to highlight the selected square
-            square.addEventListener("click", () => {
-                if (selectedSquare) {
-                    selectedSquare.classList.remove("selected"); // Remove previous selection
-                }
-                selectedSquare = square;
-                square.classList.add("selected");
-            });
-            
-            board.appendChild(square);
-        }
-    }
-});
-        </script>
+            } // Removed the extra semicolon here
+        });
+    </script>
     </div>
 </body>
 </html>

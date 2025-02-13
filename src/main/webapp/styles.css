@@ -1,3 +1,6 @@
+body {
+    background-color: rgba(0, 0, 0, 0.391);
+}
 .chessboard {
     display: grid;
     margin-left: auto;
@@ -6,7 +9,7 @@
     grid-template-rows: repeat(8, 1fr);
     width: 700px; /* Adjust this for larger size */
     height: 700px; /* Adjust this for larger size */
-    border: 5px solid black;
+    border: 5px solid white;
 }
 
 .square {
