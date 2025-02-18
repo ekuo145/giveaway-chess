@@ -5,7 +5,7 @@
 
   <groupId>com.giveawaychess</groupId>
   <artifactId>giveaway-chess</artifactId>
-  <packaging>jar</packaging>
+  <packaging>war</packaging>
   <version>2.01-SNAPSHOT</version>
   <name>giveaway-chess Maven Webapp</name>
   <url>http://maven.apache.org</url>
@@ -22,8 +22,22 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
-  </dependencies>
 
+<!-- Spring Context for core Spring features -->
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-context</artifactId>
+        <version>5.3.23</version> <!-- Use the latest stable version -->
+    </dependency>
+    
+    <!-- Spring Web MVC -->
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-webmvc</artifactId>
+        <version>5.3.23</version>
+    </dependency>
+
+    </dependencies>
   <build>
     <resources>
       <resource>

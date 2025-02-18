@@ -1,7 +1,7 @@
-package com.giveawaychess;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.giveawaychess.*;
+import com.giveawaychess.MoveRequest;
 
 @RestController
 @RequestMapping("/chess")
@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 public class ChessController {
     private final ChessBoard chessBoard = new ChessBoard(null); // No UI needed for API
 
-    // Handle move request from frontend
     @PostMapping("/move")
     public ResponseEntity<?> makeMove(@RequestBody MoveRequest move) {
         int fromRow = move.getFromRow();
@@ -21,9 +20,9 @@ public class ChessController {
         boolean moveSuccessful = chessBoard.handleMove(gameMove, new GameManager(null, null));
 
         if (moveSuccessful) {
-            return ResponseEntity.ok(chessBoard.getBoard());
+            return ResponseEntity.ok(chessBoard.getBoard());  // ✅ Move was valid, return updated board
         } else {
-            return ResponseEntity.badRequest().body("Invalid move");
+            return ResponseEntity.badRequest().body("Invalid move");  // ❌ Move was illegal
         }
     }
 
@@ -38,7 +37,4 @@ public ResponseEntity<Void> restartGame() {
     chessBoard.setUpPieces();
     return ResponseEntity.ok().build();
 }
-
-
-
 }

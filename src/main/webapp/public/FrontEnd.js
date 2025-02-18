@@ -1,15 +1,3 @@
-const express = require('express');
-const app = express();
-const port = 5500;
-
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
-
 document.addEventListener("DOMContentLoaded", function () {
     const board = document.querySelector(".chessboard");
     let selectedSquare = null; 
@@ -28,7 +16,8 @@ document.addEventListener("DOMContentLoaded", function () {
     ];
 
     const isLiveServer = window.location.hostname === "127.0.0.1";  
-    const basePath = isLiveServer ? "images" : "/giveaway-chess Maven Webapp/images";
+    const basePath = isLiveServer ? "images" : "/images";
+    
 
     for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
@@ -69,33 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
             board.appendChild(square);
         }
     } 
-
-    function updateBoard(boardState) {
-    const board = document.querySelector(".chessboard");
-    board.innerHTML = ""; // Clear previous board
-
-    for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 8; col++) {
-            const square = document.createElement("div");
-            square.classList.add("square", (row + col) % 2 === 0 ? "light" : "dark");
-            square.dataset.row = row;
-            square.dataset.col = col;
-
-            const piece = boardState[row][col];
-            if (piece) {
-                const img = document.createElement("img");
-                img.src = `images/${piece.color.toLowerCase()}/${piece.type.toLowerCase()}.png`;
-                img.alt = `${piece.color} ${piece.type}`;
-                img.classList.add("piece");
-                img.dataset.color = piece.color.toLowerCase();
-                img.dataset.type = piece.type.toLowerCase();
-                square.appendChild(img);
-            }
-
-            board.appendChild(square);
-        }
-    }
-}
+    
 
     function selectPiece(square) {
         if (selectedSquare) {
@@ -128,23 +91,60 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
-
+// Send move to backend
 function makeMove(from, to) {
     fetch('/chess/move', {
         method: 'POST',
         body: JSON.stringify({
             fromRow: parseInt(from[1]) - 1,
-            fromCol: from.charCodeAt(0) - 97, // Convert 'a'->0, 'b'->1, etc.
+            fromCol: from.charCodeAt(0) - 97,
             toRow: parseInt(to[1]) - 1,
             toCol: to.charCodeAt(0) - 97
         }),
         headers: { 'Content-Type': 'application/json' }
     })
-    .then(response => response.json())
-    .then(data => updateBoard(data))
-    .catch(error => console.error("Move error:", error));
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Invalid move!"); // If move is illegal, throw an error
+        }
+        return response.json();
+    })
+    .then(data => updateBoard(data)) // Only update the board if move is valid
+    .catch(error => alert(error.message)); // Show an error popup if move is illegal
 }
 
+function updateBoard(boardState) {
+    const board = document.querySelector(".chessboard");
+    board.innerHTML = ""; // Clear the previous board
+
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            const square = document.createElement("div");
+            square.classList.add("square", (row + col) % 2 === 0 ? "light" : "dark");
+            square.dataset.row = row;
+            square.dataset.col = col;
+
+            const piece = boardState[row][col];
+            if (piece) {
+                const img = document.createElement("img");
+                img.src = `images/${piece.color.toLowerCase()}/${piece.type.toLowerCase()}.png`;
+                img.alt = `${piece.color} ${piece.type}`;
+                img.classList.add("piece");
+                img.dataset.color = piece.color.toLowerCase();
+                img.dataset.type = piece.type.toLowerCase();
+                square.appendChild(img);
+            }
+
+            // Add event listener for move handling
+            square.addEventListener("click", () => handleSquareClick(square));
+
+            board.appendChild(square);
+        }
+    }
+}
+
+
+// Fetch current board state from backend
 function fetchBoardState() {
     fetch('/chess/state')
         .then(response => {
@@ -157,6 +157,21 @@ function fetchBoardState() {
         .catch(error => console.error("Error fetching board state:", error));
 }
 
+function handleSquareClick(square) {
+    if (selectedSquare && selectedPiece) {
+        // Prevent moving if no piece was originally selected
+        makeMove(
+            selectedSquare.dataset.col + (parseInt(selectedSquare.dataset.row) + 1),
+            square.dataset.col + (parseInt(square.dataset.row) + 1)
+        );
+        resetSelection();
+    } else if (square.firstChild && square.firstChild.classList.contains("piece")) {
+        // Select the piece if it's the current player's turn
+        if (square.firstChild.dataset.color === currentTurn) {
+            selectPiece(square);
+        }
+    }
+}
 
 
 // Restart game
@@ -167,5 +182,3 @@ document.addEventListener("DOMContentLoaded", function () {
             .catch(error => console.error("Error restarting game:", error));
     });
 });
-
-
