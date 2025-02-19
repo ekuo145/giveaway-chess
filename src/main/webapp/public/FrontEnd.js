@@ -79,10 +79,24 @@ document.addEventListener("DOMContentLoaded", function () {
     } 
 
     function isValidMove(fromSquare, toSquare) {
-        if (toSquare.firstChild && toSquare.firstChild.dataset.color === selectedPiece.dataset.color) {
-            return false;
-        }
-        return true; // Basic move validation for now
+        fetch('/chess/validMove', {
+            method: 'GET',
+            body: JSON.stringify({
+                fromRow: parseInt(from[1]) - 1,
+                fromCol: from.charCodeAt(0) - 97,
+                toRow: parseInt(to[1]) - 1,
+                toCol: to.charCodeAt(0) - 97
+            }),
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Invalid move!"); // If move is illegal, throw an error
+            }
+            return response.json();
+        })
+        .then(data => updateBoard(data)) // Only update the board if move is valid
+        .catch(error => alert(error.message)); // Show an error popup if move is illegal
     }
 
     function resetSelection() {
@@ -94,7 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
 // Send move to backend
 function makeMove(from, to) {
     fetch('/chess/move', {
-        method: 'POST',
+        method: 'GET',
         body: JSON.stringify({
             fromRow: parseInt(from[1]) - 1,
             fromCol: from.charCodeAt(0) - 97,

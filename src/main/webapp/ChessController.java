@@ -36,4 +36,19 @@ public ResponseEntity<Void> restartGame() {
     chessBoard.setUpPieces();
     return ResponseEntity.ok().build();
 }
+
+    @GetMapping("/validMove")
+    public ResponseEntity<?> isValidMove(@RequestBody MoveRequest move) {
+        int fromRow = move.getFromRow();
+        int fromCol = move.getFromCol();
+        int toRow = move.getToRow();
+        int toCol = move.getToCol();
+        boolean moveSuccessful = chessBoard.isValidMove(fromRow, fromCol, toRow, toCol);
+
+        if (moveSuccessful) {
+            return ResponseEntity.ok(chessBoard.getBoard());  // ✅ Move was valid, return updated board
+        } else {
+            return ResponseEntity.badRequest().body("Invalid move");  // ❌ Move was illegal
+        }
+    }
 }
