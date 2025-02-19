@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", function () {
         toSquare.appendChild(selectedPiece);
         fromSquare.classList.remove("selected");
         resetSelection();
-    }
+    } 
 
     function isValidMove(fromSquare, toSquare) {
         if (toSquare.firstChild && toSquare.firstChild.dataset.color === selectedPiece.dataset.color) {

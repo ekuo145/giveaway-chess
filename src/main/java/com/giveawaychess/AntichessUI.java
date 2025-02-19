@@ -227,6 +227,7 @@ public class AntichessUI {
             }
             // Second click: attempt to move the piece
             Piece movingPiece = board.getPieceAt(selectedSquare[0], selectedSquare[1]);
+            System.out.println("Piece String: " + movingPiece.toString());
             Move move = new Move(selectedSquare[0], selectedSquare[1], row, col, movingPiece); // Declare the move variable
             boolean moveSuccessful = board.handleMove(move, gameManager);
             // System.out.println("Move Attempted");

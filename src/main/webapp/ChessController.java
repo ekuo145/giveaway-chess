@@ -1,7 +1,6 @@
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.giveawaychess.*;
-import com.giveawaychess.MoveRequest;
 
 @RestController
 @RequestMapping("/chess")

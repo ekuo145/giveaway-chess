@@ -52,6 +52,11 @@ public class Piece {
         }
     }
 
+    @Override
+    public String toString() {
+        return "{ \"color\": \"" + color + "\", \"type\": \"" + type + "\"}"; 
+    }
+
     // Method to check if the piece can move from (startRow, startCol) to (endRow, endCol)
     public boolean canMove(int startRow, int startCol, int endRow, int endCol, Piece[][] board) {
         switch (type) {
