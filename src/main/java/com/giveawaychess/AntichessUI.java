@@ -51,19 +51,30 @@ public class AntichessUI {
         if (choice == 0) {
             // Play against Bot
             this.isBotGame = true;
-            String[] botOptions = {"Play as White", "Play as Black"};
+            String[] botOptions = {"Play vs Randy", "Play vs Darwin"};
             int botChoice = JOptionPane.showOptionDialog(
+                null, 
+                "Choose who to play:", 
+                "Bot Game Setup", 
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.PLAIN_MESSAGE, 
+                null, 
+                botOptions, 
+                botOptions[0]);
+            if (botChoice == 0) {
+                String[] botColorOptions = {"Play as White", "Play as Black"};
+            int botColorChoice = JOptionPane.showOptionDialog(
                 null,
                 "Choose your side:",
-                "Bot Game Setup",
+                "Randy Bot Game Setup",
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.PLAIN_MESSAGE,
                 null,
-                botOptions,
-                botOptions[0]
+                botColorOptions,
+                botColorOptions[0]
             );
 
-            if (botChoice == 0) {
+            if (botColorChoice == 0) {
                 // Play as White against Black Bot
                 this.whitePlayer = new Player(Piece.Color.WHITE, false, board);  // Human player (White)
                 this.blackPlayer = new Player(Piece.Color.BLACK, true, board);   // Bot player (Black)
@@ -74,6 +85,32 @@ public class AntichessUI {
                 this.whitePlayer = new Player(Piece.Color.WHITE, true, board);   // Bot player (White)
                 this.blackPlayer = new Player(Piece.Color.BLACK, false, board);  // Human player (Black)
                 whitePlayer.setUI(AntichessUI.this);
+            }
+            } else {
+                String[] botColorOptions = {"Play as White", "Play as Black"};
+                int botColorChoice = JOptionPane.showOptionDialog(
+                    null,
+                    "Choose your side:",
+                    "Darwin Bot Game Setup",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    botColorOptions,
+                    botColorOptions[0]
+                );
+    
+                if (botColorChoice == 0) {
+                    // Play as White against Black Bot
+                    this.whitePlayer = new Player(Piece.Color.WHITE, false, board);  // Human player (White)
+                    this.blackPlayer = new Player(Piece.Color.BLACK, true, board);   // Bot player (Black)
+                    blackPlayer.setUI(AntichessUI.this);
+                    flipBoard();
+                } else {
+                    // Play as Black against White Bot
+                    this.whitePlayer = new Player(Piece.Color.WHITE, true, board);   // Bot player (White)
+                    this.blackPlayer = new Player(Piece.Color.BLACK, false, board);  // Human player (Black)
+                    whitePlayer.setUI(AntichessUI.this);
+                }
             }
         } else {
             // Play against Human
