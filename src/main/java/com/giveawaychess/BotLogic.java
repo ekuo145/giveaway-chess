@@ -6,16 +6,18 @@ import java.util.List;
 
 public class BotLogic {
     private ChessBoard board;
+    private GameManager gameManager;
 
-    private BotType botType;  // Declare botType variable
+    public BotType botType;  // Declare botType variable
 
     public enum BotType {
         AGGRESSIVE, DEFENSIVE, RANDOM, SACRIFICIAL, HYBRID, SWEATY
     }
 
     // Constructor to initialize botType and board
-    public BotLogic(ChessBoard board, BotType botType) {
+    public BotLogic(ChessBoard board, GameManager gameManager, BotType botType) {
         this.board = board;
+        this.gameManager = gameManager;
         this.botType = botType;
     }
 
@@ -108,7 +110,7 @@ public class BotLogic {
         if (isMaximizing) {  // Opponent’s turn (tries to keep pieces in defensive mode)
             int maxEval = Integer.MIN_VALUE;
             for (Move move : legalMoves) {
-                board.handleMove(move, null);
+                board.handleMove(move, gameManager);
                 int eval = minimax(board, depth - 1, false, playerColor, isDefensive);
                 board.undoMove(move);
                 maxEval = Math.max(maxEval, eval);
@@ -117,7 +119,7 @@ public class BotLogic {
         } else {  // Bot’s turn (tries to lose pieces in normal mode)
             int minEval = Integer.MAX_VALUE;
             for (Move move : legalMoves) {
-                board.handleMove(move, null);
+                board.handleMove(move, gameManager);
                 int eval = minimax(board, depth - 1, true, playerColor, isDefensive);
                 board.undoMove(move);
                 minEval = Math.min(minEval, eval);
@@ -137,7 +139,7 @@ public class BotLogic {
         if (isMaximizing) {  // Opponent’s turn
             int maxEval = Integer.MIN_VALUE;
             for (Move move : legalMoves) {
-                board.handleMove(move, null);
+                board.handleMove(move, gameManager);
                 int eval = minimaxAlphaBeta(board, depth - 1, alpha, beta, false, playerColor);
                 board.undoMove(move);
                 maxEval = Math.max(maxEval, eval);
@@ -148,7 +150,7 @@ public class BotLogic {
         } else {  // Bot’s turn
             int minEval = Integer.MAX_VALUE;
             for (Move move : legalMoves) {
-                board.handleMove(move, null);
+                board.handleMove(move, gameManager);
                 int eval = minimaxAlphaBeta(board, depth - 1, alpha, beta, true, playerColor);
                 board.undoMove(move);
                 minEval = Math.min(minEval, eval);
@@ -165,7 +167,7 @@ public class BotLogic {
         int bestEval = Integer.MAX_VALUE;  // Bot wants the lowest score
     
         for (Move move : legalMoves) {
-            board.handleMove(move, null);
+            board.handleMove(move, gameManager);
             int eval = minimaxAlphaBeta(board, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, true, playerColor);
             board.undoMove(move);
     
@@ -221,7 +223,7 @@ public class BotLogic {
         int bestEval = Integer.MIN_VALUE; // Defensive bot wants the highest board score
     
         for (Move move : legalMoves) {
-            board.handleMove(move, null);
+            board.handleMove(move, gameManager);
             int eval = minimax(board, depth - 1, false, playerColor, true); // Now passes `true` for defensive eval
             board.undoMove(move);
     
@@ -260,7 +262,7 @@ public class BotLogic {
         int bestEval = isMaximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
     
         for (Move move : legalMoves) {
-            board.handleMove(move, null);
+            board.handleMove(move, gameManager);
             int eval = minimaxSacrificial(board, depth - 1, alpha, beta, !isMaximizing, playerColor);
             board.undoMove(move);
     
@@ -282,7 +284,7 @@ public class BotLogic {
         int bestEval = Integer.MAX_VALUE; // Sacrificial bot wants the lowest score (to lose pieces)
     
         for (Move move : legalMoves) {
-            board.handleMove(move, null);
+            board.handleMove(move, gameManager);
             int eval = minimaxSacrificial(board, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false, playerColor);
             board.undoMove(move);
     

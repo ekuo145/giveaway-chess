@@ -10,13 +10,17 @@ public class Player {
     private boolean isBot; 
     private GameManager gameManager;
     private AntichessUI ui;
+    private BotLogic botLogic; 
 
     private Piece.Color turnColor = Piece.Color.WHITE;
 
-    public Player(Piece.Color color, boolean isBot, ChessBoard chessBoard) {
+    public Player(Piece.Color color, boolean isBot, ChessBoard chessBoard, BotLogic.BotType botType) {
         this.color = color;
         this.isBot = isBot;
         this.chessBoard = chessBoard; // Initialize chessBoard
+        if (isBot) {
+            this.botLogic = new BotLogic(chessBoard, gameManager, botType);
+        }
     }
 
     public Piece.Color getTurnColor() {
@@ -27,9 +31,13 @@ public class Player {
         return color;
     }
 
-    // Setter for chessBoard
+
+
     public void setChessBoard(ChessBoard chessBoard) {
         this.chessBoard = chessBoard;
+        if (isBot && botLogic != null) {
+            botLogic = new BotLogic(chessBoard, gameManager, botLogic.botType);
+        }
     }
 
     public void setGameManager(GameManager gameManager) {
@@ -103,4 +111,15 @@ public class Player {
             System.out.println("No legal moves available for the bot.");
         }
     }    
+    public void makeBotMove() {
+        if (!isBot || botLogic == null) return;
+        
+        Move botMove = botLogic.getMove();
+        if (botMove != null) {
+            chessBoard.handleMove(botMove, gameManager);
+            ui.addMoveToHistory(botMove.getFromRow(), botMove.getFromCol(), botMove.getToRow(), botMove.getToCol());
+        } else {
+            System.out.println("Bot has no valid moves.");
+        }
+    }
 }

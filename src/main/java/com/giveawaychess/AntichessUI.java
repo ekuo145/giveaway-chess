@@ -2,6 +2,9 @@ package com.giveawaychess;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
+import com.giveawaychess.BotLogic.BotType;
+
 import java.awt.*;
 import java.net.URL;
 import java.util.ArrayList;
@@ -33,7 +36,7 @@ public class AntichessUI {
         initializeUI(); // Create and set up the GUI
         
         this.board = new ChessBoard(this);
-        this.player = new Player(Piece.Color.WHITE, false, board);
+        this.player = new Player(Piece.Color.WHITE, false, board, null);
 
         // Ask the user if they want to play against a bot or another human
         String[] options = {"Play against Bot", "Play against Human"};
@@ -76,14 +79,14 @@ public class AntichessUI {
 
             if (botColorChoice == 0) {
                 // Play as White against Black Bot
-                this.whitePlayer = new Player(Piece.Color.WHITE, false, board);  // Human player (White)
-                this.blackPlayer = new Player(Piece.Color.BLACK, true, board);   // Bot player (Black)
+                this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null);  // Human player (White)
+                this.blackPlayer = new Player(Piece.Color.BLACK, true, board, BotType.RANDOM);   // Bot player (Black)
                 blackPlayer.setUI(AntichessUI.this);
                 flipBoard();
             } else {
                 // Play as Black against White Bot
-                this.whitePlayer = new Player(Piece.Color.WHITE, true, board);   // Bot player (White)
-                this.blackPlayer = new Player(Piece.Color.BLACK, false, board);  // Human player (Black)
+                this.whitePlayer = new Player(Piece.Color.WHITE, true, board, BotType.RANDOM);   // Bot player (White)
+                this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null);  // Human player (Black)
                 whitePlayer.setUI(AntichessUI.this);
             }
             } else {
@@ -101,21 +104,21 @@ public class AntichessUI {
     
                 if (botColorChoice == 0) {
                     // Play as White against Black Bot
-                    this.whitePlayer = new Player(Piece.Color.WHITE, false, board);  // Human player (White)
-                    this.blackPlayer = new Player(Piece.Color.BLACK, true, board);   // Bot player (Black)
+                    this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null);  // Human player (White)
+                    this.blackPlayer = new Player(Piece.Color.BLACK, true, board, BotType.AGGRESSIVE);   // Bot player (Black)
                     blackPlayer.setUI(AntichessUI.this);
                     flipBoard();
                 } else {
                     // Play as Black against White Bot
-                    this.whitePlayer = new Player(Piece.Color.WHITE, true, board);   // Bot player (White)
-                    this.blackPlayer = new Player(Piece.Color.BLACK, false, board);  // Human player (Black)
+                    this.whitePlayer = new Player(Piece.Color.WHITE, true, board, BotType.AGGRESSIVE);   // Bot player (White)
+                    this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null);  // Human player (Black)
                     whitePlayer.setUI(AntichessUI.this);
                 }
             }
         } else {
             // Play against Human
-            this.whitePlayer = new Player(Piece.Color.WHITE, false, board);  // Human player (White)
-            this.blackPlayer = new Player(Piece.Color.BLACK, false, board);  // Human player (Black)
+            this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null);  // Human player (White)
+            this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null);  // Human player (Black)
             flipBoard();
         }
 
@@ -131,7 +134,7 @@ public class AntichessUI {
         
         board.startGame(); // Start the game
         if (whitePlayer.isBot()) {
-            whitePlayer.makeRandomMove(board.getBoard());
+            whitePlayer.makeBotMove();
         }
     }
 
@@ -517,7 +520,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         player.switchTurn();
         if (isWhiteTurn) {
             if (whitePlayer.isBot()) {
-                whitePlayer.makeRandomMove(boardArray);
+                whitePlayer.makeBotMove();
             } else {
                 if (!isBotGame) {
                     flipBoard();
@@ -525,7 +528,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
             }
         } else if (!isWhiteTurn) {
             if (blackPlayer.isBot()) {
-                blackPlayer.makeRandomMove(boardArray);
+                blackPlayer.makeBotMove();
                 // System.out.println(isWhiteTurn);
             } else {
                 if (!isBotGame) {
@@ -538,11 +541,11 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
     private void resetGame() {
         // Reset game-related state
         this.board = new ChessBoard(this);
-        this.player = new Player(Piece.Color.WHITE, false, board);
+        this.player = new Player(Piece.Color.WHITE, false, board, null);
     
         // Reset players
-        this.whitePlayer = new Player(Piece.Color.WHITE, false, board);
-        this.blackPlayer = new Player(Piece.Color.BLACK, false, board);
+        this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null);
+        this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null);
     
         // Start the game again
         this.gameManager = new GameManager(whitePlayer, blackPlayer);
@@ -574,8 +577,8 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
     
         // Reinitialize board and players
         board = new ChessBoard(this);
-        whitePlayer = new Player(Piece.Color.WHITE, false, board);
-        blackPlayer = new Player(Piece.Color.BLACK, false, board);
+        whitePlayer = new Player(Piece.Color.WHITE, false, board, null);
+        blackPlayer = new Player(Piece.Color.BLACK, false, board, null);
     
         // Reinitialize GameManager
         gameManager = new GameManager(whitePlayer, blackPlayer);
