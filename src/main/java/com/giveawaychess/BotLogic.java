@@ -22,23 +22,33 @@ public class BotLogic {
     }
 
     public Move getMove() {
+        List<Move> possibleMoves = getAllValidMoves(getBotColor());
+        if (possibleMoves.isEmpty()) {
+            System.out.println("BotLogic: No valid moves found.");
+            return null;
+        }
+        
         switch (botType) {
             case AGGRESSIVE:
-                return getMostAggressiveMove(board, Piece.Color.WHITE); // Ensure method exists
+                return getMostAggressiveMove(board, getBotColor()); // Ensure method exists
             case DEFENSIVE:
-                return getDefensiveMove(board, Piece.Color.WHITE, 3);
+                return getDefensiveMove(board, getBotColor(), 3);
             case RANDOM:
-                return getRandomMove(board, Piece.Color.WHITE);
+                return getRandomMove(board, getBotColor());
             case SACRIFICIAL:
-                return getSacrificialMove(board, Piece.Color.WHITE, 3);
+                return getSacrificialMove(board, getBotColor(), 3);
             case HYBRID:
-                return getAdaptiveMove(board, Piece.Color.WHITE);
+                return getAdaptiveMove(board, getBotColor());
             case SWEATY:
-                return getBestMove(board, Piece.Color.WHITE, 3);
+                return getBestMove(board, getBotColor(), 3);
             default:
-                return getRandomMove(board, Piece.Color.WHITE);
+                return getRandomMove(board, getBotColor());
         }
     }
+
+    private Piece.Color getBotColor() {
+        return gameManager.getCurrentPlayer().getColor();
+    }    
 
     private int evaluateBoard(ChessBoard board, Piece.Color playerColor) {
         int score = 0;
@@ -65,6 +75,7 @@ public class BotLogic {
     }
 
     public List<Move> getAllValidMoves(Piece.Color opponentColor) {
+        System.out.println("getAllValidMovesCalled");
         List<Move> allValidMoves = new ArrayList<>();
         
         for (int row = 0; row < 8; row++) {
@@ -185,19 +196,26 @@ public class BotLogic {
 
     public Move getMostAggressiveMove(ChessBoard board, Piece.Color playerColor) {
         List<Move> legalMoves = getAllValidMoves(playerColor);
+        // if (legalMoves.isEmpty()) {
+        //     System.out.println("BotLogic: No valid moves found.");
+        //     return null;
+        // } else {
+        //     System.out.println("List of Valid Moves " + legalMoves);
+        // }
         Move bestMove = null;
         int maxCaptureValue = -1;
     
         for (Move move : legalMoves) {
-            if (board.isCaptureMove(move.getFromRow(), move.getFromCol(), move.getToRow(), move.getToCol())) {
+            if (board.isValidMove(move.getFromRow(), move.getFromCol(), move.getToRow(), move.getToCol())) {
                 int pieceValue = getPieceValue(board.getPieceAt(move.getFromRow(), move.getFromCol()));
+                // System.out.print("Move " + move + " has a piece value of " + pieceValue);
                 if (pieceValue > maxCaptureValue) {
                     maxCaptureValue = pieceValue;
                     bestMove = move;
                 }
             }
         }
-        return bestMove != null ? bestMove : getBestMove(board, playerColor, 2);  // Fallback to normal search
+        return bestMove;
     }
 
     private int evaluateBoardDefensive(ChessBoard board, Piece.Color playerColor) {
@@ -243,7 +261,7 @@ public class BotLogic {
     
         Collections.shuffle(legalMoves);
         for (Move move : legalMoves) {
-            if (board.isCaptureMove(move.getFromRow(), move.getFromCol(), move.getToRow(), move.getToCol())) {
+            if (board.isValidMove(move.getFromRow(), move.getFromCol(), move.getToRow(), move.getToCol())) {
                 return move;
             }
         }

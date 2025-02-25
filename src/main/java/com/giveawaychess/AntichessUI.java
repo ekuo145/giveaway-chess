@@ -10,6 +10,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class AntichessUI {
@@ -24,6 +25,13 @@ public class AntichessUI {
     private JButton restartButton;
     private boolean showLegalMoves = true;
 
+    private JLabel player1Avatar;
+    private JLabel player2Avatar;
+    private JLabel dialogueLabel;
+    private JPanel dialoguePanel;
+
+    private Map<String, String> messageOptions;
+
     Player whitePlayer;
     Player blackPlayer;
     Player player;
@@ -33,10 +41,12 @@ public class AntichessUI {
 
     // Constructor to set up the UI
     public AntichessUI() {
+        setupDialogueSystem();
         initializeUI(); // Create and set up the GUI
         
         this.board = new ChessBoard(this);
-        this.player = new Player(Piece.Color.WHITE, false, board, null);
+        this.gameManager = new GameManager(); // Initialize GameManager
+        this.player = new Player(Piece.Color.WHITE, false, board, null, gameManager);
 
         // Ask the user if they want to play against a bot or another human
         String[] options = {"Play against Bot", "Play against Human"};
@@ -79,14 +89,14 @@ public class AntichessUI {
 
             if (botColorChoice == 0) {
                 // Play as White against Black Bot
-                this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null);  // Human player (White)
-                this.blackPlayer = new Player(Piece.Color.BLACK, true, board, BotType.RANDOM);   // Bot player (Black)
+                this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);  // Human player (White)
+                this.blackPlayer = new Player(Piece.Color.BLACK, true, board, BotType.RANDOM, gameManager);   // Bot player (Black)
                 blackPlayer.setUI(AntichessUI.this);
                 flipBoard();
             } else {
                 // Play as Black against White Bot
-                this.whitePlayer = new Player(Piece.Color.WHITE, true, board, BotType.RANDOM);   // Bot player (White)
-                this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null);  // Human player (Black)
+                this.whitePlayer = new Player(Piece.Color.WHITE, true, board, BotType.RANDOM, gameManager);   // Bot player (White)
+                this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);  // Human player (Black)
                 whitePlayer.setUI(AntichessUI.this);
             }
             } else {
@@ -104,25 +114,26 @@ public class AntichessUI {
     
                 if (botColorChoice == 0) {
                     // Play as White against Black Bot
-                    this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null);  // Human player (White)
-                    this.blackPlayer = new Player(Piece.Color.BLACK, true, board, BotType.AGGRESSIVE);   // Bot player (Black)
+                    this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);  // Human player (White)
+                    this.blackPlayer = new Player(Piece.Color.BLACK, true, board, BotType.AGGRESSIVE, gameManager);   // Bot player (Black)
                     blackPlayer.setUI(AntichessUI.this);
                     flipBoard();
                 } else {
                     // Play as Black against White Bot
-                    this.whitePlayer = new Player(Piece.Color.WHITE, true, board, BotType.AGGRESSIVE);   // Bot player (White)
-                    this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null);  // Human player (Black)
+                    this.whitePlayer = new Player(Piece.Color.WHITE, true, board, BotType.AGGRESSIVE, gameManager);   // Bot player (White)
+                    this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);  // Human player (Black)
                     whitePlayer.setUI(AntichessUI.this);
                 }
             }
         } else {
             // Play against Human
-            this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null);  // Human player (White)
-            this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null);  // Human player (Black)
+            this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);  // Human player (White)
+            this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);  // Human player (Black)
             flipBoard();
         }
 
-        this.gameManager = new GameManager(whitePlayer, blackPlayer); // Initialize GameManager
+        // Assign players to gameManager
+        gameManager.setPlayers(whitePlayer, blackPlayer);
         
         whitePlayer.setGameManager(gameManager); // Set GameManager for white player
         blackPlayer.setGameManager(gameManager); // Set GameManager for black player
@@ -134,7 +145,7 @@ public class AntichessUI {
         
         board.startGame(); // Start the game
         if (whitePlayer.isBot()) {
-            whitePlayer.makeBotMove();
+            whitePlayer.makeBotMove(board.getBoard());
         }
     }
 
@@ -150,6 +161,27 @@ public class AntichessUI {
         this.boardPanel = new JPanel(new GridLayout(9,9));
         // Create board buttons and set up action listeners
         boardButtons = new JButton[8][8];
+
+        JPanel topPanel = new JPanel(new FlowLayout());
+
+        // Load avatars
+        player1Avatar = createAvatarLabel("/images/profiles/crackedChess.png");
+        player2Avatar = createAvatarLabel("/images/profiles/sidewaysChess.png");
+
+        // Dialogue box
+        dialogueLabel = new JLabel("Welcome to Giveaway Chess!");
+        dialogueLabel.setFont(new Font("Arial", Font.BOLD, 16));
+
+        dialoguePanel = new JPanel();
+        dialoguePanel.add(dialogueLabel);
+
+        // Add elements to top panel
+        topPanel.add(player1Avatar);
+        topPanel.add(dialoguePanel);
+        topPanel.add(player2Avatar);
+
+        // Add to main panel
+        mainPanel.add(topPanel, BorderLayout.NORTH);
 
         // Add the top-left empty corner
         boardPanel.add(new JLabel("")); // Top-left corner is empty
@@ -282,6 +314,16 @@ public class AntichessUI {
             }
             resetBoardColors();
         }
+    }
+
+    private void setupDialogueSystem() {
+        // Predefined messages
+        messageOptions = new HashMap<>();
+        messageOptions.put("move", "Your move!");
+        messageOptions.put("capture", "Nice capture!");
+        messageOptions.put("botThinking", "The bot is thinking...");
+        messageOptions.put("check", "Check!");
+        messageOptions.put("win", "Congratulations, you win!");
     }
 
 
@@ -520,7 +562,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         player.switchTurn();
         if (isWhiteTurn) {
             if (whitePlayer.isBot()) {
-                whitePlayer.makeBotMove();
+                whitePlayer.makeBotMove(boardArray);
             } else {
                 if (!isBotGame) {
                     flipBoard();
@@ -528,7 +570,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
             }
         } else if (!isWhiteTurn) {
             if (blackPlayer.isBot()) {
-                blackPlayer.makeBotMove();
+                blackPlayer.makeBotMove(boardArray);
                 // System.out.println(isWhiteTurn);
             } else {
                 if (!isBotGame) {
@@ -541,14 +583,16 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
     private void resetGame() {
         // Reset game-related state
         this.board = new ChessBoard(this);
-        this.player = new Player(Piece.Color.WHITE, false, board, null);
+        this.player = new Player(Piece.Color.WHITE, false, board, null, gameManager);
     
         // Reset players
-        this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null);
-        this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null);
+        this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);
+        this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);
     
         // Start the game again
-        this.gameManager = new GameManager(whitePlayer, blackPlayer);
+        this.gameManager = new GameManager();
+        // Assign players to gameManager
+        gameManager.setPlayers(whitePlayer, blackPlayer);
         whitePlayer.setGameManager(gameManager);
         blackPlayer.setGameManager(gameManager);
     
@@ -577,11 +621,13 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
     
         // Reinitialize board and players
         board = new ChessBoard(this);
-        whitePlayer = new Player(Piece.Color.WHITE, false, board, null);
-        blackPlayer = new Player(Piece.Color.BLACK, false, board, null);
+        whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);
+        blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);
     
         // Reinitialize GameManager
-        gameManager = new GameManager(whitePlayer, blackPlayer);
+        gameManager = new GameManager();
+        // Assign players to gameManager
+        gameManager.setPlayers(whitePlayer, blackPlayer);
         whitePlayer.setGameManager(gameManager);
         blackPlayer.setGameManager(gameManager);
     
@@ -671,6 +717,21 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
                 "5. If a player has no legal moves, they win the game.";
         
         JOptionPane.showMessageDialog(null, rules, "Giveaway Chess Rules", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private JLabel createAvatarLabel(String imagePath) {
+        ImageIcon icon = new ImageIcon(imagePath);
+        Image scaledImage = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+        return new JLabel(new ImageIcon(scaledImage));
+    }
+
+    // Update dialogue message dynamically
+    public void updateDialogue(String key) {
+        if (messageOptions.containsKey(key)) {
+            dialogueLabel.setText(messageOptions.get(key));
+        } else {
+            dialogueLabel.setText("Unknown action.");
+        }
     }
 
 }

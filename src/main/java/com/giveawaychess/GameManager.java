@@ -3,20 +3,25 @@ package com.giveawaychess;
 public class GameManager {
     private Player whitePlayer;
     private Player blackPlayer;
-    private Piece.Color turnColor;
+    private Player currentPlayer;
 
-    public GameManager(Player whitePlayer, Player blackPlayer) {
+    public GameManager() {
+        // Initially, players are null. They will be set after creation.
+    }
+
+    public void setPlayers(Player whitePlayer, Player blackPlayer) {
         this.whitePlayer = whitePlayer;
         this.blackPlayer = blackPlayer;
-        this.turnColor = Piece.Color.WHITE; // White starts
+        this.currentPlayer = whitePlayer; // White starts first
     }
 
     public Player getCurrentPlayer() {
-        return (turnColor == Piece.Color.WHITE) ? whitePlayer : blackPlayer;
+        return currentPlayer;
     }
 
     public void switchTurn() {
-        turnColor = (turnColor == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
+        currentPlayer = (currentPlayer == whitePlayer) ? blackPlayer : whitePlayer;
     }
 }
+
 
