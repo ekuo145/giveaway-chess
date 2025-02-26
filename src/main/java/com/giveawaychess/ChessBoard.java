@@ -660,7 +660,7 @@ private List<Move> moveHistory = new ArrayList<>();
         if (piece == null) return false; // No piece to check
     
         Piece.Color opponentColor = (piece.getColor() == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
-        List<Move> opponentMoves = bot.getAllValidMoves(opponentColor);
+        List<Move> opponentMoves = getAllValidMoves(opponentColor);
     
         for (Move move : opponentMoves) {
             if (move.getToRow() == row && move.getToCol() == col) {
@@ -668,6 +668,29 @@ private List<Move> moveHistory = new ArrayList<>();
             }
         }
         return false;
+    }
+
+    private List<Move> getAllValidMoves(Piece.Color opponentColor) {
+        System.out.println("getAllValidMovesCalled");
+        List<Move> allValidMoves = new ArrayList<>();
+        
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = getPieceAt(row, col);
+                
+                if (piece != null && piece.getColor() == opponentColor) {
+                    List<int[]> validMoves = getValidMoves(row, col);
+    
+                    for (int[] move : validMoves) {
+                        int endRow = move[0];
+                        int endCol = move[1];
+                        allValidMoves.add(new Move(row, col, endRow, endCol, piece)); 
+                    }
+                }
+            }
+        }
+        
+        return allValidMoves;
     }
 
     public int countPieces(Piece.Color playerColor) {
