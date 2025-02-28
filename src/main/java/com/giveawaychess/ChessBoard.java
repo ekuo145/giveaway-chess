@@ -18,6 +18,7 @@ public class ChessBoard {
     private AntichessUI ui; // Reference to the UI
     private BotLogic bot;
 
+
     Player blackPlayer;
     Player whitePlayer;
 
@@ -135,22 +136,25 @@ public class ChessBoard {
     }
 
     private boolean canCaptureEnPassant(int row, int col) {
-        // Check if the last move was a two-square pawn move and if the target square allows en passant
         Move lastMove = getLastMove();
+        if (lastMove == null || !lastMove.isPawnMove()) {
+            return false;
+        }
     
-        if (lastMove != null && lastMove.isPawnMove()) {
-            Piece movedPawn = board[lastMove.endRow][lastMove.endCol];
-            // Check if the pawn moved two squares and is next to the current pawn
-            if (movedPawn.getColor() != currentPlayer && Math.abs(lastMove.startRow - lastMove.endRow) == 2) {
-                if (lastMove.endRow == row && (lastMove.endCol == col + 1 || lastMove.endCol == col - 1)) {
-                    // En passant is allowed
-                    return true;
-                }
+        Piece movedPawn = board[lastMove.endRow][lastMove.endCol];
+        if (movedPawn == null) {
+            return false; // Avoid NullPointerException
+        }
+    
+        if (movedPawn.getColor() != currentPlayer && Math.abs(lastMove.startRow - lastMove.endRow) == 2) {
+            if (lastMove.endRow == row && (lastMove.endCol == col + 1 || lastMove.endCol == col - 1)) {
+                return true; // En passant is allowed
             }
         }
     
         return false;
     }
+    
 
     private List<int[]> getRookMoves(int row, int col, Piece piece) {
         List<int[]> moves = new ArrayList<>();
@@ -518,6 +522,7 @@ public class ChessBoard {
 
         // Check if it's the current player's turn and if the move is valid
         if (piece != null && piece.getColor() == currentPlayer && isValidMove(startRow, startCol, endRow, endCol)) {
+            
             board[endRow][endCol] = piece;  // Move the piece
             board[startRow][startCol] = null;  // Clear the original square
 
@@ -671,7 +676,7 @@ private List<Move> moveHistory = new ArrayList<>();
     }
 
     private List<Move> getAllValidMoves(Piece.Color opponentColor) {
-        System.out.println("getAllValidMovesCalled");
+        // System.out.println("getAllValidMovesCalled");
         List<Move> allValidMoves = new ArrayList<>();
         
         for (int row = 0; row < 8; row++) {
@@ -706,7 +711,25 @@ private List<Move> moveHistory = new ArrayList<>();
         }
         return count;
     }
-    
-    
 
+    public Piece.Color getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    public void restoreBoardState(Piece[][] storedBoard, Piece.Color storedPlayer) {
+        this.board = deepCopyBoard(storedBoard);
+        this.currentPlayer = storedPlayer;
+    }    
+    
+    public Piece[][] deepCopyBoard(Piece[][] original) {
+        Piece[][] copy = new Piece[8][8];
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                if (original[row][col] != null) {
+                    copy[row][col] = new Piece(original[row][col].getType(), original[row][col].getColor());
+                }
+            }
+        }
+        return copy;
+    }
 }
