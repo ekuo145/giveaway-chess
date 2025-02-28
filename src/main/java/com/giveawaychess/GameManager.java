@@ -19,6 +19,10 @@ public class GameManager {
         return currentPlayer;
     }
 
+    public void setCurrentPlayer(Piece.Color color) {
+        currentPlayer = (color == Piece.Color.WHITE) ? whitePlayer : blackPlayer;
+    }
+
     public void switchTurn() {
         currentPlayer = (currentPlayer == whitePlayer) ? blackPlayer : whitePlayer;
     }

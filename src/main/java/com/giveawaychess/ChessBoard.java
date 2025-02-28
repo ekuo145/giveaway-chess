@@ -492,9 +492,15 @@ public class ChessBoard {
         }
     }
     
-    public void switchPlayer() {
+    public void switchPlayer(GameManager gameManager) {
         currentPlayer = (currentPlayer == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
+    
+        // **Ensure gameManager updates correctly**
+        if (gameManager.getCurrentPlayer().getColor() != currentPlayer) {
+            gameManager.switchTurn();
+        }
     }
+    
 
     public static void printTurn() {
         System.out.println("It's " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + "'s turn.");
@@ -716,10 +722,16 @@ private List<Move> moveHistory = new ArrayList<>();
         return currentPlayer;
     }
 
-    public void restoreBoardState(Piece[][] storedBoard, Piece.Color storedPlayer) {
+    public void restoreBoardState(Piece[][] storedBoard, Piece.Color storedPlayer, GameManager gameManager) {
         this.board = deepCopyBoard(storedBoard);
         this.currentPlayer = storedPlayer;
-    }    
+    
+        // **Ensure gameManager's current player is correct**
+        if (gameManager.getCurrentPlayer().getColor() != storedPlayer) {
+            gameManager.setCurrentPlayer(storedPlayer);
+        }
+    }
+    
     
     public Piece[][] deepCopyBoard(Piece[][] original) {
         Piece[][] copy = new Piece[8][8];

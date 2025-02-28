@@ -120,6 +120,10 @@ public class Player {
             chessBoard.handleMove(botMove, gameManager);
             ui.addMoveToHistory(botMove.getFromRow(), botMove.getFromCol(), botMove.getToRow(), botMove.getToCol());
             ui.updateBoard(board);
+            System.out.println("It is " + getTurnColor() + "'s turn");
+            System.out.println("Game Manager thinks it is " + gameManager.getCurrentPlayer().getColor() + "'s turn");
+            System.out.println("Bot Move Made");
+
         } else {
             System.out.println("Bot has no valid moves.");
         }

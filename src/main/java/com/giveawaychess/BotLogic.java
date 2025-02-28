@@ -182,6 +182,8 @@ public class BotLogic {
         // **Store board state before simulation**
         Piece[][] storedBoard = board.deepCopyBoard(board.getBoardArray());
         Piece.Color storedPlayer = board.getCurrentPlayer();
+        Piece.Color gameManagerPlayer = gameManager.getCurrentPlayer().getColor();
+        // System.out.println("At the start of BestMove, Game Manager thinks it is " + gameManagerPlayer);
     
         List<Move> legalMoves = getAllValidMoves(playerColor);
         Move bestMove = null;
@@ -203,7 +205,12 @@ public class BotLogic {
         }
     
         // **Restore board state after simulation**
-        board.restoreBoardState(storedBoard, storedPlayer);
+        // System.out.println("At the middle of BestMove, Game Manager thinks it is " + gameManagerPlayer);
+        board.restoreBoardState(storedBoard, storedPlayer, gameManager);
+
+        System.out.println("bot has found best move");
+        System.out.println("Stored Player is " + storedPlayer);
+        System.out.println("At the end of BestMove, Game Manager thinks it is " + gameManagerPlayer);
     
         return bestMove;
     }
