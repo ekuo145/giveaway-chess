@@ -3,6 +3,7 @@ package com.giveawaychess;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import com.giveawaychess.Piece.Color;
 import com.giveawaychess.Piece.PieceType;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class ChessBoard {
     Player whitePlayer;
 
     Move lastMove;
+    private boolean captureLeft;
 
     // Constructor initializes the board with pieces
     public ChessBoard(AntichessUI ui) {
@@ -126,8 +128,12 @@ public class ChessBoard {
 
         // En passant capture (check if the previous move allows for en passant)
         if (canCaptureEnPassant(row, col)) {
-        moves.add(new int[]{row + direction, col + 1}); // Example: Add en passant move (to right)
-        moves.add(new int[]{row + direction, col - 1}); // Example: Add en passant move (to left)
+            if (captureLeft) {
+                moves.add(new int[]{row + direction, col - 1});//Add en passant move (to left)
+            } else {
+                moves.add(new int[]{row + direction, col + 1}); //Add en passant move (to right)
+            }
+        
         }
 
         // Add more complex pawn logic here (e.g., promotion, en passant, double move on first turn)
@@ -135,20 +141,31 @@ public class ChessBoard {
         return moves;
     }
 
-    private boolean canCaptureEnPassant(int row, int col) {
+    public boolean canCaptureEnPassant(int row, int col) {
         Move lastMove = getLastMove();
         if (lastMove == null || !lastMove.isPawnMove()) {
+            System.out.println("lastMove is null or isn't a pawn move");
             return false;
         }
     
         Piece movedPawn = board[lastMove.endRow][lastMove.endCol];
         if (movedPawn == null) {
+            System.out.println("movedPawn is null");
             return false; // Avoid NullPointerException
         }
     
         if (movedPawn.getColor() != currentPlayer && Math.abs(lastMove.startRow - lastMove.endRow) == 2) {
-            if (lastMove.endRow == row && (lastMove.endCol == col + 1 || lastMove.endCol == col - 1)) {
-                return true; // En passant is allowed
+            System.out.println("Passes First Test");
+            if (lastMove.endRow == row) {
+                if (lastMove.endCol == col + 1 || lastMove.endCol == col - 1) {
+                    if (lastMove.endCol == col - 1) {
+                        captureLeft = true;
+                    } else {
+                        captureLeft = false;
+                    }
+                    return true; // En passant is allowed
+                }
+                
             }
         }
     
@@ -289,13 +306,18 @@ public class ChessBoard {
     // Method to check if a move is valid based on the piece's movement rules
     public boolean isValidMove(int startRow, int startCol, int endRow, int endCol) {
         // Ensure the starting and ending positions are within the bounds of the board
+        // Allow en passant capture
+        if (isEnPassantMove(startRow, startCol, endRow, endCol)) {
+            return true;
+        }
+
         if (!isWithinBounds(startRow, startCol) || !isWithinBounds(endRow, endCol)) {
             // System.out.println("Move is out of bounds.");
             return false;
         }
     
         Piece piece = board[startRow][startCol];
-        Piece capturedPiece = board[endRow][endCol];
+        Piece capturedPiece = board[endRow][endCol];   
 
         if (piece != null && piece.canMove(startRow, startCol, endRow, endCol, board)) {
             boolean hasCapture = hasMandatoryCapture(currentPlayer, board);
@@ -310,7 +332,6 @@ public class ChessBoard {
                     return false;
                 }
             }
-    
             return true;  // The move is valid
         }   
 
@@ -355,7 +376,7 @@ public class ChessBoard {
         Piece endPiece = board[endRow][endCol];
     
         // A capture move happens when the target square has an opponent's piece
-        return endPiece != null && startPiece.getColor() != endPiece.getColor();
+        return endPiece != null && startPiece.getColor() != endPiece.getColor() || isEnPassantMove(startRow, startCol, endRow, endCol);
     }
     
     private void checkPawnPromotion(int endRow, int endCol) {
@@ -530,6 +551,9 @@ public class ChessBoard {
         if (piece != null && piece.getColor() == currentPlayer && isValidMove(startRow, startCol, endRow, endCol)) {
             
             board[endRow][endCol] = piece;  // Move the piece
+            if (isEnPassantMove(startRow, startCol, endRow, endCol)) {
+                board[endRow - 1][endCol] = null;
+            }
             board[startRow][startCol] = null;  // Clear the original square
 
             // Record the move
@@ -744,4 +768,27 @@ private List<Move> moveHistory = new ArrayList<>();
         }
         return copy;
     }
+
+    public boolean isEnPassantMove(int startRow, int startCol, int endRow, int endCol) {
+        Move lastMove = getLastMove();
+        if (lastMove == null || !lastMove.isPawnMove()) {
+            return false;
+        }
+    
+        Piece movedPawn = board[lastMove.getToRow()][lastMove.getToCol()];
+        if (movedPawn == null || movedPawn.getType() != Piece.PieceType.PAWN) {
+            return false;
+        }
+    
+        if (movedPawn.getColor() != board[startRow][startCol].getColor().opposite() || Math.abs(lastMove.getFromRow() - lastMove.getToRow()) != 2) {
+            return false;
+        }
+    
+        if (lastMove.getToRow() == startRow && Math.abs(lastMove.getToCol() - startCol) == 1 && endRow == lastMove.getToRow() + (board[startRow][startCol].getColor() == Piece.Color.WHITE ? 1 : -1) && endCol == lastMove.getToCol()) {
+            return true;
+        }
+    
+        return false;
+    }
+    
 }

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Piece {
-    private ChessBoard board1;
+    private ChessBoard chessBoard;
     // Enum for piece type
     public enum PieceType {
         KING, QUEEN, ROOK, BISHOP, KNIGHT, PAWN;
@@ -13,6 +13,10 @@ public class Piece {
     // Enum for piece color
     public enum Color {
         WHITE, BLACK;
+
+        public Color opposite() {
+            return this == WHITE ? BLACK : WHITE;
+        }
     }
 
     private PieceType type;
@@ -170,23 +174,14 @@ public class Piece {
                 return true;
             } 
             // En passant capture
-        if (board1 != null) {
-            Move lastMove =  board1.getLastMove();
-            if (board[endRow][endCol] == null && lastMove != null) {
-                int lastMoveStartRow = lastMove.getFromRow();
-                int lastMoveStartCol = lastMove.getFromCol();
-                int lastMoveEndRow = lastMove.getToRow();
-                int lastMoveEndCol = lastMove.getToCol();
-                if (board[lastMoveEndRow][lastMoveEndCol] != null && board[lastMoveEndRow][lastMoveEndCol].getType() == PieceType.PAWN) {
-                    if (Math.abs(lastMoveStartRow - lastMoveEndRow) == 2 && lastMoveEndRow == startRow && lastMoveEndCol == endCol) {
-                        return true;
-                    }
+        if (chessBoard != null) {
+                if (chessBoard.canCaptureEnPassant(startRow, startCol)) {
+                    return true;
                 }
             } else {
                 // System.out.println("No valid capture.");
             }
             }
-        }
         return false;
     }
 

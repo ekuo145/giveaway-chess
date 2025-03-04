@@ -263,6 +263,9 @@ public class BotLogic {
         List<Move> legalMoves = getAllValidMoves(playerColor);
         Move bestMove = null;
         int bestEval = Integer.MIN_VALUE; // Defensive bot wants the highest board score
+
+        Piece[][] storedBoard = board.deepCopyBoard(board.getBoardArray());
+        Piece.Color storedPlayer = board.getCurrentPlayer();
     
         for (Move move : legalMoves) {
             board.handleMove(move, gameManager);
@@ -274,6 +277,8 @@ public class BotLogic {
                 bestMove = move;
             }
         }
+
+        board.restoreBoardState(storedBoard, storedPlayer, gameManager);
         return bestMove;
     }
     
@@ -324,7 +329,10 @@ public class BotLogic {
         List<Move> legalMoves = getAllValidMoves(playerColor);
         Move bestMove = null;
         int bestEval = Integer.MAX_VALUE; // Sacrificial bot wants the lowest score (to lose pieces)
-    
+
+        Piece[][] storedBoard = board.deepCopyBoard(board.getBoardArray());
+        Piece.Color storedPlayer = board.getCurrentPlayer();
+
         for (Move move : legalMoves) {
             board.handleMove(move, gameManager);
             int eval = minimaxSacrificial(board, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false, playerColor);
@@ -335,6 +343,8 @@ public class BotLogic {
                 bestMove = move;
             }
         }
+
+        board.restoreBoardState(storedBoard, storedPlayer, gameManager);
         return bestMove;
     }
     
