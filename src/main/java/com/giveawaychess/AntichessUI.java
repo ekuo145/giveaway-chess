@@ -171,6 +171,10 @@ public class AntichessUI {
         JButton helpButton = new JButton("Rules");
         helpButton.addActionListener(e -> showHelpDialog());
 
+        // Add Check Valid Move Button
+        JButton checkValidMoveButton = new JButton("Capture?");
+        checkValidMoveButton.addActionListener(e -> checkMandatoryCapture());
+
         // Add Toggle Legal Moves Button
         JButton toggleLegalMovesButton = new JButton("Toggle Legal Moves");
         toggleLegalMovesButton.addActionListener(e -> toggleLegalMoves());
@@ -181,6 +185,7 @@ public class AntichessUI {
         buttonPanel.add(restartButton);
         buttonPanel.add(helpButton);
         buttonPanel.add(toggleLegalMovesButton);
+        buttonPanel.add(checkValidMoveButton);
 
         // Add row labels and board buttons
         for (int row = 0; row < 8; row++) {
@@ -255,11 +260,22 @@ public class AntichessUI {
                 selectedSquare = null;
             }
         } else {
+            Piece targetedPiece = board.getPieceAt(row, col);
             if (selectedSquare == null || selectedSquare.length < 2) {
                 System.err.println("Error: selectedSquare is not properly initialized.");
             }
             // Second click: attempt to move the piece
             Piece movingPiece = board.getPieceAt(selectedSquare[0], selectedSquare[1]);
+            if (targetedPiece != null && movingPiece.getColor() == targetedPiece.getColor()) {
+                selectedSquare = null;
+                selectedSquare = new int[]{row, col};
+                List<int[]> validMoves = board.getValidMoves(row, col);
+                // System.out.println(validMoves);
+                if (showLegalMoves == true) {
+                    highlightMoves(validMoves);
+                }
+                return;
+            }
             System.out.println("Piece String: " + movingPiece.toString());
             Move move = new Move(selectedSquare[0], selectedSquare[1], row, col, movingPiece); // Declare the move variable
             boolean moveSuccessful = board.handleMove(move, gameManager);
@@ -695,4 +711,13 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         }
     }
 
+    private void checkMandatoryCapture() {
+        boolean hasMandatoryCapture = board.hasMandatoryCapture(gameManager.getCurrentPlayer().getColor(), board.getBoard());
+        
+        if (hasMandatoryCapture) {
+            JOptionPane.showMessageDialog(null, "You have at least one mandatory capture!", "Move Check", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(null, "No capture moves available!", "Move Check", JOptionPane.WARNING_MESSAGE);
+        }
+    }
 }
