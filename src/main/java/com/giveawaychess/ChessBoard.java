@@ -18,6 +18,7 @@ public class ChessBoard {
     private boolean gameOver = false;
     private AntichessUI ui; // Reference to the UI
     private BotLogic bot;
+    private GameAntichess game;
 
 
     Player blackPlayer;
@@ -496,15 +497,23 @@ public class ChessBoard {
 
     public void checkGameEnd() {
         // Check if the current player has any valid moves
-        blackPlayer = ui.blackPlayer;
-        whitePlayer = ui.whitePlayer;
+        if (ui != null) {
+            blackPlayer = ui.blackPlayer;
+            whitePlayer = ui.whitePlayer;
+        } else if (game != null) {
+            blackPlayer = game.blackPlayer;
+            whitePlayer = game.whitePlayer;
+        }
+        
         if (!hasValidMove(currentPlayer)) {
             System.out.println("Player " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " has no valid moves left!");
             System.out.println("Game over! " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " wins!");
             
             // Determine the winner (opposite of the current player)
             Player winner = (currentPlayer == Piece.Color.WHITE) ? blackPlayer : whitePlayer;
-            ui.gameWon(winner);
+            if (ui != null) {
+                ui.gameWon(winner);
+            }
             return;
         }
     
@@ -515,7 +524,9 @@ public class ChessBoard {
             
             // Determine the winner (opposite of the current player)
             Player winner = (currentPlayer == Piece.Color.WHITE) ? blackPlayer : whitePlayer;
-            ui.gameWon(winner);
+            if (ui != null) {
+                ui.gameWon(winner);
+            }
             return;
         }
     }
@@ -538,7 +549,9 @@ public class ChessBoard {
     
     public void startGame() {
         gameOver = false;
-        ui.updateBoard(board);
+        if (ui != null) {
+            ui.updateBoard(board);
+        }
     }
     
     public boolean handleMove(Move move, GameManager gameManager) {
@@ -583,7 +596,9 @@ public class ChessBoard {
             checkGameEnd();
 
             // Update the UI after the move
-            SwingUtilities.invokeLater(() -> ui.updateBoard(board));
+            if (ui != null) {
+                SwingUtilities.invokeLater(() -> ui.updateBoard(board));
+            }
 
             boolean hasCapture = hasMandatoryCapture(currentPlayer, board);
                 if (hasCapture) {

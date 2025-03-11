@@ -5,8 +5,8 @@ import com.giveawaychess.BotLogic.BotType;
 public class GameAntichess {
     private boolean isWhiteTurn = true;
     private boolean isBotGame = false;
-    private Player whitePlayer;
-    private Player blackPlayer;
+    public Player whitePlayer;
+    public Player blackPlayer;
     private Player player;
     private ChessBoard board;
     private GameManager gameManager;
