@@ -276,7 +276,7 @@ public class AntichessUI {
                 }
                 return;
             }
-            System.out.println("Piece String: " + movingPiece.toString());
+            // System.out.println("Piece String: " + movingPiece.toString());
             Move move = new Move(selectedSquare[0], selectedSquare[1], row, col, movingPiece); // Declare the move variable
             boolean moveSuccessful = board.handleMove(move, gameManager);
             // System.out.println("Move Attempted");

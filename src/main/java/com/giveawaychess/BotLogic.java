@@ -209,8 +209,8 @@ public class BotLogic {
         board.restoreBoardState(storedBoard, storedPlayer, gameManager);
 
         System.out.println("bot has found best move");
-        System.out.println("Stored Player is " + storedPlayer);
-        System.out.println("At the end of BestMove, Game Manager thinks it is " + gameManagerPlayer);
+        // System.out.println("Stored Player is " + storedPlayer);
+        // System.out.println("At the end of BestMove, Game Manager thinks it is " + gameManagerPlayer);
     
         return bestMove;
     }

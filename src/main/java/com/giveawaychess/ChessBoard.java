@@ -152,18 +152,18 @@ public class ChessBoard {
     public boolean canCaptureEnPassant(int row, int col) {
         Move lastMove = getLastMove();
         if (lastMove == null || !lastMove.isPawnMove()) {
-            System.out.println("lastMove is null or isn't a pawn move");
+            // System.out.println("lastMove is null or isn't a pawn move");
             return false;
         }
     
         Piece movedPawn = board[lastMove.endRow][lastMove.endCol];
         if (movedPawn == null) {
-            System.out.println("movedPawn is null");
+            // System.out.println("movedPawn is null");
             return false; // Avoid NullPointerException
         }
     
         if (movedPawn.getColor() != currentPlayer && Math.abs(lastMove.startRow - lastMove.endRow) == 2) {
-            System.out.println("Passes First Test");
+            // System.out.println("Passes First Test");
             if (lastMove.endRow == row) {
                 if (lastMove.endCol == col + 1 || lastMove.endCol == col - 1) {
                     if (lastMove.endCol == col - 1) {
