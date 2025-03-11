@@ -26,11 +26,18 @@ public class ChessBoard {
     Move lastMove;
     private boolean captureLeft;
 
-    // Constructor initializes the board with pieces
+
+    // Constructor that allows usage with or without UI
     public ChessBoard(AntichessUI ui) {
         this.ui = ui;
         setUpPieces();
-        ui.updateBoard(board);
+        if (this.ui != null) {
+            ui.updateBoard(board);
+        }
+    }
+    
+    public ChessBoard() {
+        this(null); // Calls the other constructor with no UI
     }
 
     // Method to set up the pieces

@@ -57,7 +57,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
             board.appendChild(square);
         }
+        startGame();
     } 
+
+    function startGame(playAgainstBot = false, botType = "RANDOM", playerColor = "WHITE") {
+        fetch(`/chess/startGame?playAgainstBot=${playAgainstBot}&botType=${botType}&playerColor=${playerColor}`, {
+            method: "POST"
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json(); // Convert response to JSON
+        })
+        .then(data => console.log("Game started:", data))
+        .catch(error => console.error("Error starting game", error));
+    }
+    
     
 
     function selectPiece(square) {
