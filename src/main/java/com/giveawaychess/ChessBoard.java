@@ -495,8 +495,7 @@ public class ChessBoard {
         return false;  // No pieces left for the player
     }
 
-    public void checkGameEnd() {
-        // Check if the current player has any valid moves
+    public void checkGameEnd(boolean isSimulation) {
         if (ui != null) {
             blackPlayer = ui.blackPlayer;
             whitePlayer = ui.whitePlayer;
@@ -504,32 +503,26 @@ public class ChessBoard {
             blackPlayer = game.blackPlayer;
             whitePlayer = game.whitePlayer;
         }
-        
+
         if (!hasValidMove(currentPlayer)) {
-            System.out.println("Player " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " has no valid moves left!");
-            System.out.println("Game over! " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " wins!");
-            
-            // Determine the winner (opposite of the current player)
             Player winner = (currentPlayer == Piece.Color.WHITE) ? blackPlayer : whitePlayer;
-            if (ui != null) {
-                ui.gameWon(winner);
+            System.out.println("Game over: No valid moves left for " + currentPlayer);
+            if (!isSimulation && ui != null) {
+                ui.gameWon(winner, false);
             }
             return;
         }
     
-        // Check if the current player has any pieces left
         if (!hasPieces(currentPlayer)) {
-            System.out.println("Player " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " has no pieces left!");
-            System.out.println("Game over! " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + " wins!");
-            
-            // Determine the winner (opposite of the current player)
             Player winner = (currentPlayer == Piece.Color.WHITE) ? blackPlayer : whitePlayer;
-            if (ui != null) {
-                ui.gameWon(winner);
+            System.out.println("Game over: No pieces left for " + currentPlayer);
+            if (!isSimulation && ui != null) {
+                ui.gameWon(winner, false);
             }
             return;
         }
     }
+    
     
     public void switchPlayer(GameManager gameManager) {
         currentPlayer = (currentPlayer == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
@@ -553,62 +546,46 @@ public class ChessBoard {
             ui.updateBoard(board);
         }
     }
-    
-    public boolean handleMove(Move move, GameManager gameManager) {
+
+    public boolean handleMove(Move move, GameManager gameManager, boolean isSimulation) {
         int startRow = move.getFromRow();
         int startCol = move.getFromCol();
         int endRow = move.getToRow();
         int endCol = move.getToCol();
         Piece piece = board[startRow][startCol];
-
+    
         if (gameOver) {
             System.out.println("Game is over. No more moves allowed.");
             return false;
         }
-
-
-        // Check if it's the current player's turn and if the move is valid
+    
         if (piece != null && piece.getColor() == currentPlayer && isValidMove(startRow, startCol, endRow, endCol)) {
-            
-            board[endRow][endCol] = piece;  // Move the piece
-            if (isEnPassantMove(startRow, startCol, endRow, endCol)) {
-                board[endRow - 1][endCol] = null;
-            }
-            board[startRow][startCol] = null;  // Clear the original square
-
-            // Record the move
+            board[endRow][endCol] = piece;
+            board[startRow][startCol] = null;
+    
             recordMove(startRow, startCol, endRow, endCol, piece);
             lastMove = move;
-
-            // printBoard();
+    
             if (gameManager.getCurrentPlayer().isBot()) {
-                checkRandomPromotionMove(endRow, endCol, currentPlayer);;
+                checkRandomPromotionMove(endRow, endCol, currentPlayer);
             } else {
-            checkPawnPromotion(endRow, endCol);
+                checkPawnPromotion(endRow, endCol);
             }
-
-            // Alternate between players
+    
             gameManager.switchTurn();
             currentPlayer = gameManager.getCurrentPlayer().getColor();
-            //System.out.println("Switching turn to " + gameManager.getCurrentPlayer().getColor().toString());
     
-            // Check if the next player has valid moves or if the game should end
-            checkGameEnd();
-
-            // Update the UI after the move
-            if (ui != null) {
+            if (!isSimulation) {
+                checkGameEnd(false);
+            }
+    
+            if (!isSimulation && ui != null) {
                 SwingUtilities.invokeLater(() -> ui.updateBoard(board));
             }
-
-            boolean hasCapture = hasMandatoryCapture(currentPlayer, board);
-                if (hasCapture) {
-            System.out.println("Next player has a mandatory capture.");
+    
+            return true;
         }
-
-        return true;
-        }
-
-        // System.out.println("Invalid move.");
+    
         return false;
     }
 
@@ -768,15 +745,23 @@ private List<Move> moveHistory = new ArrayList<>();
         return currentPlayer;
     }
 
-    public void restoreBoardState(Piece[][] storedBoard, Piece.Color storedPlayer, GameManager gameManager) {
+    public void restoreBoardState(Piece[][] storedBoard, Piece.Color storedPlayer, GameManager gameManager, boolean wasGameOver) {
         this.board = deepCopyBoard(storedBoard);
         this.currentPlayer = storedPlayer;
+        this.gameOver = wasGameOver;
     
-        // **Ensure gameManager's current player is correct**
+        if (gameOver) {
+            if (ui != null) {
+                ui.gameWon((storedPlayer == Piece.Color.WHITE) ? ui.blackPlayer : ui.whitePlayer, false);
+            }
+        }
+    
         if (gameManager.getCurrentPlayer().getColor() != storedPlayer) {
             gameManager.setCurrentPlayer(storedPlayer);
         }
     }
+    
+    
     
     
     public Piece[][] deepCopyBoard(Piece[][] original) {

@@ -106,7 +106,7 @@ public class Player {
         if (!possibleMoves.isEmpty()) {
             Move randomMove = possibleMoves.get(rand.nextInt(possibleMoves.size()));
             // System.out.println("Bot selected move: " + randomMove.getFromRow() + ", " + randomMove.getFromCol() + " to " + randomMove.getToRow() + ", " + randomMove.getToCol());
-            chessBoard.handleMove(randomMove, gameManager);
+            chessBoard.handleMove(randomMove, gameManager, false);
             ui.addMoveToHistory(randomMove.getFromRow(), randomMove.getFromCol(), randomMove.getToRow(), randomMove.getToCol());
         } else {
             System.out.println("No legal moves available for the bot.");
@@ -117,13 +117,12 @@ public class Player {
         
         Move botMove = botLogic.getMove();
         if (botMove != null) {
-            chessBoard.handleMove(botMove, gameManager);
+            chessBoard.handleMove(botMove, gameManager, false);
             ui.addMoveToHistory(botMove.getFromRow(), botMove.getFromCol(), botMove.getToRow(), botMove.getToCol());
             ui.updateBoard(board);
-            // System.out.println("It is " + getTurnColor() + "'s turn");
-            // System.out.println("Game Manager thinks it is " + gameManager.getCurrentPlayer().getColor() + "'s turn");
-            // System.out.println("Bot Move Made");
-
+            System.out.println("It is " + getTurnColor() + "'s turn");
+            System.out.println("Game Manager thinks it is " + gameManager.getCurrentPlayer().getColor() + "'s turn");
+            System.out.println("Bot Move Made");
         } else {
             System.out.println("Bot has no valid moves.");
         }

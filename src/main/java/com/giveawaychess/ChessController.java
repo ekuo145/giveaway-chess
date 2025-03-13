@@ -24,7 +24,7 @@ public class ChessController {
         int toCol = move.getToCol();
 
         Move gameMove = new Move(fromRow, fromCol, toRow, toCol, chessBoard.getPieceAt(fromRow, fromCol));
-        boolean moveSuccessful = chessBoard.handleMove(gameMove, new GameManager());
+        boolean moveSuccessful = chessBoard.handleMove(gameMove, new GameManager(), false);
 
         if (moveSuccessful) {
             return ResponseEntity.ok(chessBoard.getBoard());  // ✅ Move was valid, return updated board

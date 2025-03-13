@@ -276,9 +276,9 @@ public class AntichessUI {
                 }
                 return;
             }
-            // System.out.println("Piece String: " + movingPiece.toString());
+            System.out.println("Piece String: " + movingPiece.toString());
             Move move = new Move(selectedSquare[0], selectedSquare[1], row, col, movingPiece); // Declare the move variable
-            boolean moveSuccessful = board.handleMove(move, gameManager);
+            boolean moveSuccessful = board.handleMove(move, gameManager, false);
             // System.out.println("Move Attempted");
             if (moveSuccessful) {
                 addMoveToHistory(selectedSquare[0], selectedSquare[1], row, col);
@@ -287,7 +287,7 @@ public class AntichessUI {
             } else {
                 // Handle invalid move (optional feedback to the user)
                 selectedSquare = null; // Reset after an invalid attempt
-                // System.out.println("Move Not Successful");
+                System.out.println("Move Not Successful");
             }
             resetBoardColors();
         }
@@ -616,16 +616,17 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         board.startGame();
     } 
 
-    public void gameWon(Player winner) {
+    public void gameWon(Player winner, boolean isSimulation) {
+        if (isSimulation) return;  // Don't trigger UI animations if the game ended in a bot simulation
+    
         String winnerText = winner.getColor() == Piece.Color.WHITE ? "Black Wins!" : "White Wins!";
         
-        // Display the winner message
         JLabel winnerLabel = new JLabel(winnerText, SwingConstants.CENTER);
         winnerLabel.setFont(new Font("Arial", Font.BOLD, 40));
         winnerLabel.setForeground(Color.RED);
         winnerLabel.setOpaque(true);
-        winnerLabel.setBackground(new Color(255, 255, 255, 200)); // Semi-transparent background
-        
+        winnerLabel.setBackground(new Color(255, 255, 255, 200));
+    
         JPanel overlayPanel = new JPanel();
         overlayPanel.setLayout(new BorderLayout());
         overlayPanel.add(winnerLabel, BorderLayout.CENTER);
@@ -635,14 +636,12 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         frame.getLayeredPane().add(overlayPanel, JLayeredPane.POPUP_LAYER);
         overlayPanel.setBounds(0, 0, frame.getWidth(), frame.getHeight());
     
-        // Start confetti animation
         startConfettiAnimation(frame);
     
-        // Optional: Delay before restarting the game
         Timer restartTimer = new Timer(5000, e -> resetGame());
         restartTimer.setRepeats(false);
         restartTimer.start();
-    }
+    }    
 
     private void startConfettiAnimation(JFrame frame) {
         JPanel confettiPanel = new JPanel() {

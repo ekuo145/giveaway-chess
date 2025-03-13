@@ -40,7 +40,7 @@ public class BotLogic {
             case HYBRID:
                 return getAdaptiveMove(board, getBotColor());
             case SWEATY:
-                return getBestMove(board, getBotColor(), 2);
+                return getBestMove(board, getBotColor(), 3);
             default:
                 return getRandomMove(board, getBotColor());
         }
@@ -51,28 +51,38 @@ public class BotLogic {
     }    
 
     private int evaluateBoard(ChessBoard board, Piece.Color playerColor) {
-        int score = 0;
+        int botScore = 0;
+        int opponentScore = 0;
+    
+        Piece.Color opponentColor = (playerColor == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
+    
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 Piece piece = board.getPieceAt(row, col);
-                if (piece != null && piece.getColor() == playerColor) {
-                    score += getPieceValue(piece);
+                if (piece != null) {
+                    if (piece.getColor() == playerColor) {
+                        botScore += getPieceValue(piece);
+                    } else if (piece.getColor() == opponentColor) {
+                        opponentScore += getPieceValue(piece);
+                    }
                 }
             }
         }
-
-        Piece.Color opponentColor = (playerColor == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
-            List<Move> opponentMoves = getAllValidMoves(opponentColor);
-
-            for (Move move : opponentMoves) {
-                if (board.isCaptureMove(move.getFromRow(), move.getFromCol(), move.getToRow(), move.getToCol())) {
-                    score -= 1; 
-                }
+    
+        // Encourage losing pieces while ensuring the opponent keeps theirs
+        int score = botScore - opponentScore;
+    
+        // Penalize if the bot has capture opportunities but doesn't take them
+        List<Move> botMoves = getAllValidMoves(playerColor);
+        for (Move move : botMoves) {
+            if (board.isCaptureMove(move.getFromRow(), move.getFromCol(), move.getToRow(), move.getToCol())) {
+                score -= 1;  // Prioritize capturing moves
             }
-
-
+        }
+    
         return score;
     }
+    
 
     public List<Move> getAllValidMoves(Piece.Color opponentColor) {
         // System.out.println("getAllValidMovesCalled");
@@ -121,7 +131,7 @@ public class BotLogic {
         if (isMaximizing) {  // Opponent’s turn (tries to keep pieces in defensive mode)
             int maxEval = Integer.MIN_VALUE;
             for (Move move : legalMoves) {
-                board.handleMove(move, gameManager);
+                board.handleMove(move, gameManager, true);
                 int eval = minimax(board, depth - 1, false, playerColor, isDefensive);
                 board.undoMove(move);
                 maxEval = Math.max(maxEval, eval);
@@ -130,7 +140,7 @@ public class BotLogic {
         } else {  // Bot’s turn (tries to lose pieces in normal mode)
             int minEval = Integer.MAX_VALUE;
             for (Move move : legalMoves) {
-                board.handleMove(move, gameManager);
+                board.handleMove(move, gameManager, true);
                 int eval = minimax(board, depth - 1, true, playerColor, isDefensive);
                 board.undoMove(move);
                 minEval = Math.min(minEval, eval);
@@ -155,7 +165,7 @@ public class BotLogic {
             // System.out.println("Minimax Alpha Beta Maximizing Called");
             int maxEval = Integer.MIN_VALUE;
             for (Move move : legalMoves) {
-                board.handleMove(move, gameManager);
+                board.handleMove(move, gameManager, true);
                 int eval = minimaxAlphaBeta(board, depth - 1, alpha, beta, false, playerColor);
                 board.undoMove(move);
                 maxEval = Math.max(maxEval, eval);
@@ -167,7 +177,7 @@ public class BotLogic {
             // System.out.println("Minimax Alpha Beta Else Called");
             int minEval = Integer.MAX_VALUE;
             for (Move move : legalMoves) {
-                board.handleMove(move, gameManager);
+                board.handleMove(move, gameManager, true);
                 int eval = minimaxAlphaBeta(board, depth - 1, alpha, beta, true, playerColor);
                 board.undoMove(move);
                 minEval = Math.min(minEval, eval);
@@ -182,39 +192,36 @@ public class BotLogic {
         // **Store board state before simulation**
         Piece[][] storedBoard = board.deepCopyBoard(board.getBoardArray());
         Piece.Color storedPlayer = board.getCurrentPlayer();
-        Piece.Color gameManagerPlayer = gameManager.getCurrentPlayer().getColor();
-        // System.out.println("At the start of BestMove, Game Manager thinks it is " + gameManagerPlayer);
-    
+        boolean wasGameOver = board.isGameOver(); // Store the game-over state
+
         List<Move> legalMoves = getAllValidMoves(playerColor);
+        if (legalMoves.isEmpty() || wasGameOver) {
+            return null; // If game is over, bot should not return any move
+        }
+
         Move bestMove = null;
         int bestEval = Integer.MAX_VALUE;  // Bot wants the lowest score
-    
+
         for (Move move : legalMoves) {
-            board.handleMove(move, gameManager);
+            board.handleMove(move, gameManager, true);
             int eval = minimaxAlphaBeta(board, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, true, playerColor);
-            board.undoMove(move);  // Undo the move after evaluation
-    
+            board.undoMove(move);
+
             if (board.isCaptureMove(move.getFromRow(), move.getFromCol(), move.getToRow(), move.getToCol())) {
                 eval -= 5;  // Extra reward for moves that force captures
             }
-    
+
             if (eval < bestEval) {
                 bestEval = eval;
                 bestMove = move;
             }
         }
-    
-        // **Restore board state after simulation**
-        // System.out.println("At the middle of BestMove, Game Manager thinks it is " + gameManagerPlayer);
-        board.restoreBoardState(storedBoard, storedPlayer, gameManager);
 
-        System.out.println("bot has found best move");
-        // System.out.println("Stored Player is " + storedPlayer);
-        // System.out.println("At the end of BestMove, Game Manager thinks it is " + gameManagerPlayer);
-    
+        // **Restore board state after simulation, preserving game-over state**
+        board.restoreBoardState(storedBoard, storedPlayer, gameManager, wasGameOver); // Marking as simulation
+
         return bestMove;
     }
-    
     
 
     public Move getMostAggressiveMove(ChessBoard board, Piece.Color playerColor) {
@@ -266,9 +273,10 @@ public class BotLogic {
 
         Piece[][] storedBoard = board.deepCopyBoard(board.getBoardArray());
         Piece.Color storedPlayer = board.getCurrentPlayer();
+        boolean wasGameOver = board.isGameOver(); // Store the game-over state
     
         for (Move move : legalMoves) {
-            board.handleMove(move, gameManager);
+            board.handleMove(move, gameManager, true);
             int eval = minimax(board, depth - 1, false, playerColor, true); // Now passes `true` for defensive eval
             board.undoMove(move);
     
@@ -278,7 +286,7 @@ public class BotLogic {
             }
         }
 
-        board.restoreBoardState(storedBoard, storedPlayer, gameManager);
+        board.restoreBoardState(storedBoard, storedPlayer, gameManager, wasGameOver); // Marking as simulation
         return bestMove;
     }
     
@@ -309,7 +317,7 @@ public class BotLogic {
         int bestEval = isMaximizing ? Integer.MIN_VALUE : Integer.MAX_VALUE;
     
         for (Move move : legalMoves) {
-            board.handleMove(move, gameManager);
+            board.handleMove(move, gameManager, true);
             int eval = minimaxSacrificial(board, depth - 1, alpha, beta, !isMaximizing, playerColor);
             board.undoMove(move);
     
@@ -332,9 +340,10 @@ public class BotLogic {
 
         Piece[][] storedBoard = board.deepCopyBoard(board.getBoardArray());
         Piece.Color storedPlayer = board.getCurrentPlayer();
+        boolean wasGameOver = board.isGameOver(); // Store the game-over state
 
         for (Move move : legalMoves) {
-            board.handleMove(move, gameManager);
+            board.handleMove(move, gameManager, true);
             int eval = minimaxSacrificial(board, depth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false, playerColor);
             board.undoMove(move);
     
@@ -344,7 +353,7 @@ public class BotLogic {
             }
         }
 
-        board.restoreBoardState(storedBoard, storedPlayer, gameManager);
+        board.restoreBoardState(storedBoard, storedPlayer, gameManager, wasGameOver); // Marking as simulation
         return bestMove;
     }
     

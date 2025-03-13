@@ -49,7 +49,7 @@ public class GameAntichess {
         if (movingPiece == null) return false;
         
         Move move = new Move(startRow, startCol, endRow, endCol, movingPiece);
-        boolean moveSuccessful = board.handleMove(move, gameManager);
+        boolean moveSuccessful = board.handleMove(move, gameManager, false);
         
         if (moveSuccessful) {
             isWhiteTurn = !isWhiteTurn;
