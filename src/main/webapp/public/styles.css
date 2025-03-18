@@ -1,5 +1,7 @@
 body {
     background-color: rgba(0, 0, 0, 0.391);
+        color: white;
+        font-family: Arial, sans-serif;
 }
 .chessboard {
     display: grid;
@@ -36,4 +38,165 @@ img {
 .selected {
     outline: 4px solid red; /* Highlight the selected piece */
     box-shadow: 0 0 10px red;
+}
+
+
+/* Modal Background */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Dark transparent background */
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #252525; /* Dark grey */
+    padding: 20px;
+    border-radius: 8px;
+    width: 50%;
+    color: white;
+    box-shadow: 2px 2px 15px rgba(255, 255, 255, 0.2);
+    border: 2px solid #444;
+}
+
+/* Close Button */
+.close {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: white;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.close:hover {
+    color: red;
+}
+
+.move-history {
+    width: 250px;
+    height: 500px;
+    background-color: 252525;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 2px 2px 15px rgba(255, 255, 255, 0.1);
+    overflow-y: auto;
+    border: 2px solid #444;
+}
+
+.move-history h2 {
+    text-align: center;
+    font-size: 18px;
+    color: #f0f0f0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+}
+
+#moveList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#moveList li {
+    padding: 8px;
+    background-color: #333;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    color: #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+#moveList li:hover {
+    background-color: #444;
+}
+
+.button-container {
+    display: flex;
+    margin-left: 400px;
+    gap: 10px; /* Space between buttons */
+    margin-top: 15px;
+}
+
+/* CSS */
+.button-86 {
+  all: unset;
+  width: 100px;
+  height: 30px;
+  font-size: 16px;
+  background: transparent;
+  border: none;
+  position: relative;
+  color: #f0f0f0;
+  cursor: pointer;
+  z-index: 1;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.button-86::after,
+.button-86::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: -99999;
+  transition: all .4s;
+}
+
+.button-86::before {
+  transform: translate(0%, 0%);
+  width: 100%;
+  height: 100%;
+  background: #28282d;
+  border-radius: 10px;
+}
+
+.button-86::after {
+  transform: translate(10px, 10px);
+  width: 35px;
+  height: 35px;
+  background: #ffffff15;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border-radius: 50px;
+}
+
+.button-86:hover::before {
+  transform: translate(5%, 20%);
+  width: 110%;
+  height: 110%;
+}
+
+.button-86:hover::after {
+  border-radius: 10px;
+  transform: translate(0, 0);
+  width: 100%;
+  height: 100%;
+}
+
+.button-86:active::after {
+  transition: 0s;
+  transform: translate(0, 5%);
 }

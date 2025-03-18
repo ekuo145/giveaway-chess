@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
     const board = document.querySelector(".chessboard");
+    let moveHistory = [];
     let selectedSquare = null; 
     let selectedPiece = null;
     let currentTurn = "white";
@@ -139,7 +140,10 @@ function makeMove(from, to) {
         }
         return response.json();
     })
-    .then(data => updateBoard(data)) // Only update the board if move is valid
+    .then(data => {
+        updateBoard(data)
+        addMoveToHistory(from, to);
+    }) // Only update the board if move is valid
     .catch(error => alert(error.message)); // Show an error popup if move is illegal
 }
 
@@ -173,6 +177,22 @@ function updateBoard(boardState) {
     }
 }
 
+function addMoveToHistory(from, to) {
+    const move = `${from} → ${to}`;
+    moveHistory.push(move);
+    updateMoveHistory();
+}
+
+function updateMoveHistory() {
+    const moveList = document.getElementById("moveList");
+    moveList.innerHTML = "";
+    moveHistory.forEach((move, index) => {
+        const moveItem = document.createElement("li");
+        moveItem.textContent = `${index + 1}. ${move}`;
+        moveList.appendChild(moveItem);
+    });
+}
+
 
 // Fetch current board state from backend
 function fetchBoardState() {
@@ -204,11 +224,45 @@ function handleSquareClick(square) {
 }
 
 
-// Restart game
 document.addEventListener("DOMContentLoaded", function () {
+    // Restart Game Button
     document.getElementById("restartButton").addEventListener("click", function () {
         fetch('/chess/restart', { method: 'GET' })  
             .then(() => fetchBoardState())
             .catch(error => console.error("Error restarting game:", error));
     });
+
+    // Help Modal Logic
+    const helpModal = document.getElementById("helpModal");
+    const helpButton = document.getElementById("helpButton");
+    const closeButton = document.querySelector(".close");
+
+    helpButton.addEventListener("click", function () {
+        helpModal.style.display = "flex"; // Show modal
+    });
+
+    closeButton.addEventListener("click", function () {
+        helpModal.style.display = "none"; // Hide modal
+    });
+
+    window.addEventListener("click", function (event) {
+        if (event.target === helpModal) {
+            helpModal.style.display = "none"; // Hide modal when clicking outside
+        }
+    });
+
+    // Check Forced Capture
+    document.getElementById("checkCaptureButton").addEventListener("click", function () {
+        fetch('/chess/forcedCapture', { method: 'GET' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.forcedCapture) {
+                    alert("You must capture a piece!");
+                } else {
+                    alert("No forced captures available.");
+                }
+            })
+            .catch(error => console.error("Error checking forced capture:", error));
+    });
 });
+

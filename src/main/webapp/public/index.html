@@ -7,10 +7,34 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="chessboard"></div>
+    <div class="container">
+        <div class="chessboard"></div>
+
+        <!-- Move History Section -->
+        <div class="move-history">
+            <h2>Move History</h2>
+            <ul id="moveList"></ul>
+        </div>
+    </div>
 
     <script src="FrontEnd.js"></script> <!-- External JavaScript file -->
 
-    <button id="restartButton">Restart Game</button>
+    <div class="button-container">
+        <button class="button-86" role="button" id="restartButton">Restart Game</button>
+        <button class="button-86" role="button" id="helpButton">Help</button>
+        <button class="button-86" role="button" id="checkCaptureButton">Forced Capture?</button>
+    </div>    
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Game Help</h2>
+            <p>- Click a piece to select it.</p>
+            <p>- Click a valid destination to move.</p>
+            <p>- Capturing is mandatory in Giveaway Chess.</p>
+            <p>- Press 'Check Forced Capture' to see if you must capture.</p>
+        </div>
+    </div>
 </body>
 </html>
