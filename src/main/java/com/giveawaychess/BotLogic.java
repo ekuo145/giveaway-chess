@@ -82,6 +82,10 @@ public class BotLogic {
     
         return score;
     }
+
+    int evaluateMobility(Piece.Color color) {
+        return getAllValidMoves(color).size();
+    }
     
 
     public List<Move> getAllValidMoves(Piece.Color opponentColor) {

@@ -1,0 +1,16 @@
+{
+    "pieceValues": {
+        "Bishop": -3,
+        "King": 0,
+        "Pawn": -1,
+        "Queen": -9,
+        "Knight": -3,
+        "Rook": -5
+    },
+    "botName": "DefensiveBot",
+    "authorName": "JaneDoe",
+    "capturePrioritization": ["Capture only when forced"],
+    "forcedMoveStrategy": ["Try to create more forced moves"],
+    "wildCard": "Skip Every 5th Turn",
+    "pawnBehavior": ["Delay pawn moves for later"]
+}
