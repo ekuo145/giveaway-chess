@@ -8,7 +8,7 @@ import com.giveawaychess.BotLogic.BotType;
 @RequestMapping("/chess")
 @CrossOrigin(origins = "*") // Allow frontend access
 public class ChessController {
-    private final ChessBoard chessBoard = new ChessBoard(null); // No UI needed for API
+    private final ChessBoard chessBoard = new ChessBoard(null, null); // No UI needed for API
     private GameAntichess game;
 
     @GetMapping("/")

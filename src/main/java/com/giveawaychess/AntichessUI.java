@@ -47,8 +47,8 @@ public class AntichessUI {
         setupDialogueSystem();
         initializeUI(); // Create and set up the GUI
         
-        this.board = new ChessBoard(this);
         this.gameManager = new GameManager(); // Initialize GameManager
+        this.board = new ChessBoard(this, gameManager);
         this.player = new Player(Piece.Color.WHITE, false, board, null, gameManager);
 
         // Prompt user for game mode
@@ -559,7 +559,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
     }
     private void resetGame() {
         // Reset game-related state
-        this.board = new ChessBoard(this);
+        this.board = new ChessBoard(this, gameManager);
         this.player = new Player(Piece.Color.WHITE, false, board, null, gameManager);
     
         // Reset players
@@ -597,7 +597,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         isBotGame = false; // Ensure correct bot behavior
     
         // Reinitialize board and players
-        board = new ChessBoard(this);
+        board = new ChessBoard(this, gameManager);
         whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);
         blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);
     

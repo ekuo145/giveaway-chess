@@ -74,8 +74,6 @@ public class Piece {
                 return canMoveBishop(startRow, startCol, endRow, endCol, board);
             case KNIGHT:
                 return canMoveKnight(startRow, startCol, endRow, endCol);
-            case PAWN:
-                return canMovePawn(startRow, startCol, endRow, endCol, board);
             default:
                 return false;
         }
@@ -134,56 +132,43 @@ public class Piece {
         return (rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2);
     }
 
-    public boolean canMovePawn(int startRow, int startCol, int endRow, int endCol, Piece[][] board) {
-        int direction = (color == Color.WHITE) ? 1 : -1;  // White pawns move up (1), Black pawns move down (-1)
+    public boolean canMovePawn(int startRow, int startCol, int endRow, int endCol, Piece[][] board, boolean newbieMode) {
+        int direction = (color == Color.WHITE) ? 1 : -1;  // White moves up, Black moves down
     
-        if (endRow < 0 || endRow >= board.length) {
-            // System.out.println("Invalid move: target row is out of bounds.");
-            return false;
-        }
-       
         // Moving forward (not capturing)
         if (startCol == endCol) {
-            if (board[endRow][endCol] == null) {  // Only move forward if the target square is empty
-                // One square forward move
+            if (board[endRow][endCol] == null) {
                 if (startRow + direction == endRow) {
-                    // System.out.println("One-square move is valid.");
                     return true;
                 }
-                // Two squares forward move
-                else if ((startRow == 1 && color == Color.WHITE) || (startRow == 6 && color == Color.BLACK)) {
+                // Disable two-square move if Newbie mode is on
+                if (!newbieMode && ((startRow == 1 && color == Color.WHITE) || (startRow == 6 && color == Color.BLACK))) {
                     int intermediateRow = startRow + direction;
                     if (startRow + 2 * direction == endRow && board[intermediateRow][startCol] == null) {
-                        // System.out.println("Two-square move is valid.");
                         return true;
-                     } 
-                     //else {
-                    //     System.out.println("Invalid two-square move: end row is not correct.");
-                    // }
-                } 
-                // else {
-                //     System.out.println("Invalid two-square move: path is blocked or out of bounds.");
-                // }
-             } 
-        }
-        
-        // Capturing diagonally
-        else if (Math.abs(startCol - endCol) == 1 && startRow + direction == endRow) {
-            if (board[endRow][endCol] != null && board[endRow][endCol].getColor() != this.color) {
-                // System.out.println("Valid Capture");
-                return true;
-            } 
-            // En passant capture
-        if (chessBoard != null) {
-                if (chessBoard.canCaptureEnPassant(startRow, startCol)) {
-                    return true;
+                    }
                 }
-            } else {
-                // System.out.println("No valid capture.");
             }
+        }
+    
+        // Diagonal capture
+        if (Math.abs(startCol - endCol) == 1 && startRow + direction == endRow) {
+            if (board[endRow][endCol] != null && board[endRow][endCol].getColor() != this.color) {
+                return true;
             }
+        }
+        // En passant capture
+        if (chessBoard != null) {
+            if (chessBoard.canCaptureEnPassant(startRow, startCol)) {
+                return true;
+            }
+        } else {
+            // System.out.println("No valid capture.");
+        }
+    
         return false;
     }
+    
 
 public List<Move> generatePotentialMoves(int row, int col, Piece[][] board) {
     List<Move> potentialMoves = new ArrayList<>();

@@ -14,12 +14,11 @@ import java.util.ArrayList;
 // Define the ChessBoard class
 public class ChessBoard {
     private Piece[][] board = new Piece[8][8];
-    private static Piece.Color currentPlayer = Piece.Color.WHITE;
     private boolean gameOver = false;
     private AntichessUI ui; // Reference to the UI
     private BotLogic bot;
     private GameAntichess game;
-
+    private GameManager gameManager;
 
     Player blackPlayer;
     Player whitePlayer;
@@ -29,8 +28,9 @@ public class ChessBoard {
 
 
     // Constructor that allows usage with or without UI
-    public ChessBoard(AntichessUI ui) {
+    public ChessBoard(AntichessUI ui, GameManager gameManager) {
         this.ui = ui;
+        this.gameManager = gameManager;
         setUpPieces();
         if (this.ui != null) {
             ui.updateBoard(board);
@@ -38,7 +38,7 @@ public class ChessBoard {
     }
     
     public ChessBoard() {
-        this(null); // Calls the other constructor with no UI
+        this(null, null); // Calls the other constructor with no UI
     }
 
     // Method to set up the pieces
@@ -79,75 +79,20 @@ public class ChessBoard {
     }
 
     public List<int[]> getValidMoves(int row, int col) {
-        List<int[]> validMoves = new ArrayList<>();
         Piece piece = board[row][col];
-        
-        if (piece == null) {
-            return validMoves; // No piece at this location
-        }
-
-        switch (piece.getType()) {
-            case PAWN:
-                validMoves = getPawnMoves(row, col, piece);
-                break;
-            case ROOK:
-                validMoves = getRookMoves(row, col, piece);
-                break;
-            case KNIGHT:
-                validMoves = getKnightMoves(row, col, piece);
-                break;
-            case BISHOP:
-                validMoves = getBishopMoves(row, col, piece);
-                break;
-            case QUEEN:
-                validMoves = getQueenMoves(row, col, piece);
-                break;
-            case KING:
-                validMoves = getKingMoves(row, col, piece);
-                break;
-        }
-        return validMoves;
-    }
-
-    private List<int[]> getPawnMoves(int row, int col, Piece piece) {
+        if (piece == null) return new ArrayList<>();
+    
         List<int[]> moves = new ArrayList<>();
-        int direction = piece.getColor() == Piece.Color.WHITE ? 1 : -1; // White pawns move up, black down
-
-        // Normal move forward (one square)
-        if (isValidMove(row, col, row + direction, col)) {
-            moves.add(new int[]{row + direction, col});
-        }
-
-        // First move, two squares forward
-        if ((piece.getColor() == Piece.Color.WHITE && row == 1) || (piece.getColor() == Piece.Color.BLACK && row == 6)) {
-        // Pawns can move two squares if they are in their starting position
-            if (isValidMove(row, col, row + 2 * direction, col)) {
-            moves.add(new int[]{row + 2 * direction, col});
+        List<Move> potentialMoves = piece.generatePotentialMoves(row, col, board);
+    
+        for (Move move : potentialMoves) {
+            if (isValidMove(move.getFromRow(), move.getFromCol(), move.getToRow(), move.getToCol())) {
+                moves.add(new int[]{move.getToRow(), move.getToCol()});
             }
         }
-
-        // Capture diagonally
-        if (isValidMove(row, col, row + direction, col - 1)) {
-            moves.add(new int[]{row + direction, col - 1});
-        }
-        if (isValidMove(row, col, row + direction, col + 1)) {
-            moves.add(new int[]{row + direction, col + 1});
-        }
-
-        // En passant capture (check if the previous move allows for en passant)
-        if (canCaptureEnPassant(row, col)) {
-            if (captureLeft) {
-                moves.add(new int[]{row + direction, col - 1});//Add en passant move (to left)
-            } else {
-                moves.add(new int[]{row + direction, col + 1}); //Add en passant move (to right)
-            }
-        
-        }
-
-        // Add more complex pawn logic here (e.g., promotion, en passant, double move on first turn)
-
+    
         return moves;
-    }
+    }    
 
     public boolean canCaptureEnPassant(int row, int col) {
         Move lastMove = getLastMove();
@@ -162,7 +107,7 @@ public class ChessBoard {
             return false; // Avoid NullPointerException
         }
     
-        if (movedPawn.getColor() != currentPlayer && Math.abs(lastMove.startRow - lastMove.endRow) == 2) {
+        if (movedPawn.getColor() != gameManager.getCurrentPlayer().getColor() && Math.abs(lastMove.startRow - lastMove.endRow) == 2) {
             // System.out.println("Passes First Test");
             if (lastMove.endRow == row) {
                 if (lastMove.endCol == col + 1 || lastMove.endCol == col - 1) {
@@ -181,127 +126,6 @@ public class ChessBoard {
     }
     
 
-    private List<int[]> getRookMoves(int row, int col, Piece piece) {
-        List<int[]> moves = new ArrayList<>();
-        
-        // Directions: up, down, left, right
-        int[][] directions = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
-    
-        for (int[] direction : directions) {
-            int newRow = row;
-            int newCol = col;
-            
-            while (true) {
-                newRow += direction[0];
-                newCol += direction[1];
-    
-                if (!isWithinBounds(newRow, newCol)) {
-                    break; // Out of bounds
-                }
-    
-                // If the move is valid (not blocked by a piece of the same color)
-                if (isValidMove(row, col, newRow, newCol)) {
-                    moves.add(new int[]{newRow, newCol});
-                    // Stop if we encounter an opponent's piece (we can capture it)
-                    if (board[newRow][newCol] != null) {
-                        break;
-                    }
-                }
-            }
-        }
-    
-        return moves;
-    }
-    
-
-    private List<int[]> getKnightMoves(int row, int col, Piece piece) {
-        List<int[]> moves = new ArrayList<>();
-        
-        // The possible knight move offsets
-        int[][] knightMoves = {
-            {2, 1}, {2, -1}, {-2, 1}, {-2, -1}, // Vertical "L" moves
-            {1, 2}, {1, -2}, {-1, 2}, {-1, -2}  // Horizontal "L" moves
-        };
-        
-        // Iterate over all possible knight moves
-        for (int[] move : knightMoves) {
-            int newRow = row + move[0];
-            int newCol = col + move[1];
-    
-            // Check if the move is within the board bounds and is valid
-            if (isWithinBounds(newRow, newCol) && isValidMove(row, col, newRow, newCol)) {
-                moves.add(new int[]{newRow, newCol});
-            }
-        }
-    
-        return moves;
-    }
-    
-    private List<int[]> getBishopMoves(int row, int col, Piece piece) {
-        List<int[]> moves = new ArrayList<>();
-        
-        // Directions: top-left, top-right, bottom-left, bottom-right
-        int[][] directions = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
-    
-        for (int[] direction : directions) {
-            int newRow = row;
-            int newCol = col;
-    
-            while (true) {
-                newRow += direction[0];
-                newCol += direction[1];
-    
-                if (!isWithinBounds(newRow, newCol)) {
-                    break; // Out of bounds
-                }
-    
-                // If the move is valid (not blocked by a piece of the same color)
-                if (isValidMove(row, col, newRow, newCol)) {
-                    moves.add(new int[]{newRow, newCol});
-                    // Stop if we encounter an opponent's piece (we can capture it)
-                    if (board[newRow][newCol] != null) {
-                        break;
-                    }
-                }
-            }
-        }
-    
-        return moves;
-    }
-
-    private List<int[]> getQueenMoves(int row, int col, Piece piece) {
-        List<int[]> moves = new ArrayList<>();
-    
-        // Queen moves are a combination of rook and bishop moves
-        moves.addAll(getRookMoves(row, col, piece)); // Add Rook's horizontal and vertical moves
-        moves.addAll(getBishopMoves(row, col, piece)); // Add Bishop's diagonal moves
-    
-        return moves;
-    }
-
-    private List<int[]> getKingMoves(int row, int col, Piece piece) {
-        List<int[]> moves = new ArrayList<>();
-        
-        // Directions: all 8 possible directions (vertical, horizontal, diagonal)
-        int[][] kingMoves = {
-            {1, 0}, {-1, 0}, {0, 1}, {0, -1},  // Vertical and horizontal
-            {1, 1}, {1, -1}, {-1, 1}, {-1, -1} // Diagonal
-        };
-    
-        for (int[] move : kingMoves) {
-            int newRow = row + move[0];
-            int newCol = col + move[1];
-    
-            // Check if the move is within bounds and valid
-            if (isWithinBounds(newRow, newCol) && isValidMove(row, col, newRow, newCol)) {
-                moves.add(new int[]{newRow, newCol});
-            }
-        }
-    
-        return moves;
-    }
-    
-
     public boolean isGameOver() {
         return gameOver;
     }
@@ -311,42 +135,35 @@ public class ChessBoard {
     }
     
 
-    // Method to check if a move is valid based on the piece's movement rules
+    public boolean isValidMove(int startRow, int startCol, int endRow, int endCol, GameManager gameManager) {
+        Piece piece = board[startRow][startCol];
+        if (piece != null && piece.getType() == Piece.PieceType.PAWN) {
+            return piece.canMovePawn(startRow, startCol, endRow, endCol, board, gameManager.isNewbieMode());
+        }
+        return piece != null && piece.canMove(startRow, startCol, endRow, endCol, board);
+    }
+
     public boolean isValidMove(int startRow, int startCol, int endRow, int endCol) {
-        // Ensure the starting and ending positions are within the bounds of the board
-        // Allow en passant capture
-        if (isEnPassantMove(startRow, startCol, endRow, endCol)) {
-            return true;
+        Piece piece = board[startRow][startCol];
+    
+        if (piece == null || !isWithinBounds(startRow, startCol) || !isWithinBounds(endRow, endCol)) {
+            return false;
         }
 
-        if (!isWithinBounds(startRow, startCol) || !isWithinBounds(endRow, endCol)) {
-            // System.out.println("Move is out of bounds.");
+        if (piece != null && piece.getType() == Piece.PieceType.PAWN) {
+            return piece.canMovePawn(startRow, startCol, endRow, endCol, board, gameManager.isNewbieMode());
+        }
+    
+        boolean hasCapture = hasMandatoryCapture(gameManager.getCurrentPlayer().getColor(), board);
+    
+        // Directly use piece's movement logic
+        if (!piece.canMove(startRow, startCol, endRow, endCol, board)) {
             return false;
         }
     
-        Piece piece = board[startRow][startCol];
-        Piece capturedPiece = board[endRow][endCol];   
-
-        if (piece != null && piece.canMove(startRow, startCol, endRow, endCol, board)) {
-            boolean hasCapture = hasMandatoryCapture(currentPlayer, board);
-
-            if (hasCapture && !isCaptureMove(startRow, startCol, endRow, endCol)) {
-                // System.out.println("Capture is mandatory, but this move doesn't capture.");
-                return false;
-            }
-
-            if (capturedPiece != null) {
-                if (piece.getColor() == capturedPiece.getColor()) {
-                    return false;
-                }
-            }
-            return true;  // The move is valid
-        }   
-
-    return false;
+        // If capturing is mandatory, enforce it
+        return !hasCapture || isCaptureMove(startRow, startCol, endRow, endCol);
     }
-
-    
     
 
     public boolean hasMandatoryCapture(Piece.Color currentPlayerColor, Piece[][] board) { 
@@ -386,20 +203,21 @@ public class ChessBoard {
         // A capture move happens when the target square has an opponent's piece
         return endPiece != null && startPiece.getColor() != endPiece.getColor() || isEnPassantMove(startRow, startCol, endRow, endCol);
     }
-    
-    private void checkPawnPromotion(int endRow, int endCol) {
+
+    private void checkPawnPromotion(int endRow, int endCol, boolean randomPromotion) {
         Piece piece = board[endRow][endCol];
-        if (piece instanceof Piece) {
-            if (piece.getType() == Piece.PieceType.PAWN) {
-            // System.out.println("Piece is a Pawn");
-            // Check if the pawn has reached the last row (opposite side)
-            if ((piece.getColor() == Piece.Color.WHITE && endRow == 7) || 
-                (piece.getColor() == Piece.Color.BLACK && endRow == 0)) {
-                    promotePawn(endRow, endCol, piece.getColor());
-                }
+        if (piece.getType() == Piece.PieceType.PAWN && 
+            ((piece.getColor() == Piece.Color.WHITE && endRow == 7) || 
+            (piece.getColor() == Piece.Color.BLACK && endRow == 0))) {
+    
+            if (randomPromotion) {
+                makeRandomPromotionMove(endRow, endCol, piece.getColor());
+            } else {
+                promotePawn(endRow, endCol, piece.getColor());
             }
         }
     }
+    
     
     private void promotePawn(int row, int col, Piece.Color color) {
         Piece newPiece;
@@ -440,20 +258,6 @@ public class ChessBoard {
         newPiece = new Piece(Piece.PieceType.QUEEN, (color)); // Default to Queen if no choice is made
     }
         board[row][col] = newPiece;
-    }
-
-    public void checkRandomPromotionMove(int endRow, int endCol, Piece.Color color) {
-        Piece piece = board[endRow][endCol];
-        if (piece instanceof Piece) {
-            if (piece.getType() == Piece.PieceType.PAWN) {
-            // System.out.println("Piece is a Pawn");
-            // Check if the pawn has reached the last row (opposite side)
-            if ((piece.getColor() == Piece.Color.WHITE && endRow == 7) || 
-                (piece.getColor() == Piece.Color.BLACK && endRow == 0)) {
-                    makeRandomPromotionMove(endRow, endCol, piece.getColor());
-                }
-            }
-        }
     }
 
     private void makeRandomPromotionMove(int row, int col, Piece.Color color) {
@@ -504,41 +308,32 @@ public class ChessBoard {
             whitePlayer = game.whitePlayer;
         }
 
-        if (!hasValidMove(currentPlayer)) {
-            Player winner = (currentPlayer == Piece.Color.WHITE) ? blackPlayer : whitePlayer;
-            System.out.println("Game over: No valid moves left for " + currentPlayer);
+        if (!hasValidMove(gameManager.getCurrentPlayer().getColor())) {
+            Player winner = (gameManager.getCurrentPlayer().getColor() == Piece.Color.WHITE) ? blackPlayer : whitePlayer;
+            System.out.println("Game over: No valid moves left for " + gameManager.getCurrentPlayer().getColor());
             if (!isSimulation && ui != null) {
                 ui.gameWon(winner, false);
             }
             return;
         }
     
-        if (!hasPieces(currentPlayer)) {
-            Player winner = (currentPlayer == Piece.Color.WHITE) ? blackPlayer : whitePlayer;
-            System.out.println("Game over: No pieces left for " + currentPlayer);
+        if (!hasPieces(gameManager.getCurrentPlayer().getColor())) {
+            Player winner = (gameManager.getCurrentPlayer().getColor() == Piece.Color.WHITE) ? blackPlayer : whitePlayer;
+            System.out.println("Game over: No pieces left for " + gameManager.getCurrentPlayer().getColor());
             if (!isSimulation && ui != null) {
                 ui.gameWon(winner, false);
             }
             return;
         }
     }
-    
-    
-    public void switchPlayer(GameManager gameManager) {
-        currentPlayer = (currentPlayer == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
-    
-        // **Ensure gameManager updates correctly**
-        if (gameManager.getCurrentPlayer().getColor() != currentPlayer) {
-            gameManager.switchTurn();
-        }
-    }
-    
 
-    public static void printTurn() {
-        System.out.println("It's " + (currentPlayer == Piece.Color.WHITE ? "White" : "Black") + "'s turn.");
+    public void printTurn() {
+        System.out.println("It's " + ((gameManager.getCurrentPlayer().getColor() == Piece.Color.WHITE) ? "White" : "Black") + "'s turn.");
     }
 
-    
+    public Piece.Color getCurrentPlayer() {
+        return gameManager.getCurrentPlayer().getColor();
+    }
     
     public void startGame() {
         gameOver = false;
@@ -559,7 +354,7 @@ public class ChessBoard {
             return false;
         }
     
-        if (piece != null && piece.getColor() == currentPlayer && isValidMove(startRow, startCol, endRow, endCol)) {
+        if (piece != null && piece.getColor() == gameManager.getCurrentPlayer().getColor() && isValidMove(startRow, startCol, endRow, endCol)) {
             board[endRow][endCol] = piece;
             board[startRow][startCol] = null;
     
@@ -567,14 +362,13 @@ public class ChessBoard {
             lastMove = move;
     
             if (gameManager.getCurrentPlayer().isBot()) {
-                checkRandomPromotionMove(endRow, endCol, currentPlayer);
+                checkPawnPromotion(endRow, endCol, true);
             } else {
-                checkPawnPromotion(endRow, endCol);
+                checkPawnPromotion(endRow, endCol, false);
             }
     
             gameManager.switchTurn();
-            currentPlayer = gameManager.getCurrentPlayer().getColor();
-    
+
             if (!isSimulation) {
                 checkGameEnd(false);
             }
@@ -635,7 +429,11 @@ private List<Move> moveHistory = new ArrayList<>();
         }
     
         // Restore turn
-        currentPlayer = (currentPlayer == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
+        if (gameManager.getCurrentPlayer().getColor() == Piece.Color.WHITE) {
+            gameManager.setCurrentPlayer(Piece.Color.BLACK);
+        } else {
+            gameManager.setCurrentPlayer(Piece.Color.WHITE);
+        }
     }
     
 
@@ -741,13 +539,8 @@ private List<Move> moveHistory = new ArrayList<>();
         return count;
     }
 
-    public Piece.Color getCurrentPlayer() {
-        return currentPlayer;
-    }
-
     public void restoreBoardState(Piece[][] storedBoard, Piece.Color storedPlayer, GameManager gameManager, boolean wasGameOver) {
         this.board = deepCopyBoard(storedBoard);
-        this.currentPlayer = storedPlayer;
         this.gameOver = wasGameOver;
     
         if (gameOver) {
@@ -755,10 +548,7 @@ private List<Move> moveHistory = new ArrayList<>();
                 ui.gameWon((storedPlayer == Piece.Color.WHITE) ? ui.blackPlayer : ui.whitePlayer, false);
             }
         }
-    
-        if (gameManager.getCurrentPlayer().getColor() != storedPlayer) {
-            gameManager.setCurrentPlayer(storedPlayer);
-        }
+        gameManager.setCurrentPlayer(storedPlayer);
     }
     
     
@@ -777,25 +567,12 @@ private List<Move> moveHistory = new ArrayList<>();
     }
 
     public boolean isEnPassantMove(int startRow, int startCol, int endRow, int endCol) {
-        Move lastMove = getLastMove();
-        if (lastMove == null || !lastMove.isPawnMove()) {
-            return false;
-        }
-    
-        Piece movedPawn = board[lastMove.getToRow()][lastMove.getToCol()];
-        if (movedPawn == null || movedPawn.getType() != Piece.PieceType.PAWN) {
-            return false;
-        }
-    
-        if (movedPawn.getColor() != board[startRow][startCol].getColor().opposite() || Math.abs(lastMove.getFromRow() - lastMove.getToRow()) != 2) {
-            return false;
-        }
-    
-        if (lastMove.getToRow() == startRow && Math.abs(lastMove.getToCol() - startCol) == 1 && endRow == lastMove.getToRow() + (board[startRow][startCol].getColor() == Piece.Color.WHITE ? 1 : -1) && endCol == lastMove.getToCol()) {
-            return true;
-        }
-    
-        return false;
+         // Ensure move is diagonal
+    if (Math.abs(startCol - endCol) != 1) return false;
+
+    // Check if en passant is allowed at this square
+    return canCaptureEnPassant(startRow, startCol) &&
+           endRow == getLastMove().getToRow() + (board[startRow][startCol].getColor() == Piece.Color.WHITE ? 1 : -1);
     }
     
 }

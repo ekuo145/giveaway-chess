@@ -26,6 +26,10 @@ public class GameManager {
     public void switchTurn() {
         currentPlayer = (currentPlayer == whitePlayer) ? blackPlayer : whitePlayer;
     }
+
+    public boolean isNewbieMode() {
+        return false;
+    }
 }
 
 
