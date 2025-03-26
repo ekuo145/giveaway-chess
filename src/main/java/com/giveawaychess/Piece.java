@@ -74,6 +74,8 @@ public class Piece {
                 return canMoveBishop(startRow, startCol, endRow, endCol, board);
             case KNIGHT:
                 return canMoveKnight(startRow, startCol, endRow, endCol);
+            case PAWN:
+                return canMovePawn(startRow, startCol, endRow, endCol, board);
             default:
                 return false;
         }
@@ -132,8 +134,13 @@ public class Piece {
         return (rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2);
     }
 
-    public boolean canMovePawn(int startRow, int startCol, int endRow, int endCol, Piece[][] board, boolean newbieMode) {
-        int direction = (color == Color.WHITE) ? 1 : -1;  // White moves up, Black moves down
+    public boolean canMovePawn(int startRow, int startCol, int endRow, int endCol, Piece[][] board) {
+        if (endRow < 0 || endRow >= board.length) {
+            // System.out.println("Invalid move: target row is out of bounds.");
+            return false;
+        }
+
+        int direction = (color == Color.WHITE) ? 1 : -1;  // White pawns move up (1), Black pawns move down (-1)
     
         // Moving forward (not capturing)
         if (startCol == endCol) {
@@ -141,8 +148,9 @@ public class Piece {
                 if (startRow + direction == endRow) {
                     return true;
                 }
+                // Two squares forward move
+                else if ((startRow == 1 && color == Color.WHITE) || (startRow == 6 && color == Color.BLACK)) {
                 // Disable two-square move if Newbie mode is on
-                if (!newbieMode && ((startRow == 1 && color == Color.WHITE) || (startRow == 6 && color == Color.BLACK))) {
                     int intermediateRow = startRow + direction;
                     if (startRow + 2 * direction == endRow && board[intermediateRow][startCol] == null) {
                         return true;
@@ -151,8 +159,8 @@ public class Piece {
             }
         }
     
+        else if (Math.abs(startCol - endCol) == 1 && startRow + direction == endRow) {
         // Diagonal capture
-        if (Math.abs(startCol - endCol) == 1 && startRow + direction == endRow) {
             if (board[endRow][endCol] != null && board[endRow][endCol].getColor() != this.color) {
                 return true;
             }

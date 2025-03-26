@@ -9,6 +9,8 @@ public class Move {
     private Piece capturedPiece; // Store the piece that was captured
     private boolean promotion;
 
+    private boolean wasEnPassant = false;
+
     public Move(int startRow, int startCol, int endRow, int endCol, Piece movedPiece) {
         this.startRow = startRow;
         this.startCol = startCol;
@@ -56,4 +58,16 @@ public class Move {
         return promotion;
     }
 
+    public boolean wasEnPassant() {
+        return wasEnPassant;
+    }
+
+    public void setCapturedPiece(Piece capturedPiece) {
+        this.capturedPiece = capturedPiece;
+    }    
+
+    public void setWasEnPassant(boolean wasEnPassant) {
+        this.wasEnPassant = wasEnPassant;
+    }
+    
 }

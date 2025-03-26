@@ -135,23 +135,19 @@ public class ChessBoard {
     }
     
 
-    public boolean isValidMove(int startRow, int startCol, int endRow, int endCol, GameManager gameManager) {
-        Piece piece = board[startRow][startCol];
-        if (piece != null && piece.getType() == Piece.PieceType.PAWN) {
-            return piece.canMovePawn(startRow, startCol, endRow, endCol, board, gameManager.isNewbieMode());
-        }
-        return piece != null && piece.canMove(startRow, startCol, endRow, endCol, board);
-    }
+    // public boolean isValidMove(int startRow, int startCol, int endRow, int endCol, GameManager gameManager) {
+    //     Piece piece = board[startRow][startCol];
+    //     if (piece != null && piece.getType() == Piece.PieceType.PAWN) {
+    //         return piece.canMovePawn(startRow, startCol, endRow, endCol, board, gameManager.isNewbieMode());
+    //     }
+    //     return piece != null && piece.canMove(startRow, startCol, endRow, endCol, board);
+    // }
 
     public boolean isValidMove(int startRow, int startCol, int endRow, int endCol) {
         Piece piece = board[startRow][startCol];
     
         if (piece == null || !isWithinBounds(startRow, startCol) || !isWithinBounds(endRow, endCol)) {
             return false;
-        }
-
-        if (piece != null && piece.getType() == Piece.PieceType.PAWN) {
-            return piece.canMovePawn(startRow, startCol, endRow, endCol, board, gameManager.isNewbieMode());
         }
     
         boolean hasCapture = hasMandatoryCapture(gameManager.getCurrentPlayer().getColor(), board);
@@ -355,9 +351,18 @@ public class ChessBoard {
         }
     
         if (piece != null && piece.getColor() == gameManager.getCurrentPlayer().getColor() && isValidMove(startRow, startCol, endRow, endCol)) {
+            Piece captured = board[endRow][endCol];
+            move.setCapturedPiece(captured);
+
+    
+            if (isEnPassantMove(startRow, startCol, endRow, endCol)) {
+                move.setWasEnPassant(true);
+            }
+            
             board[endRow][endCol] = piece;
             board[startRow][startCol] = null;
-    
+            
+
             recordMove(startRow, startCol, endRow, endCol, piece);
             lastMove = move;
     
@@ -574,5 +579,21 @@ private List<Move> moveHistory = new ArrayList<>();
     return canCaptureEnPassant(startRow, startCol) &&
            endRow == getLastMove().getToRow() + (board[startRow][startCol].getColor() == Piece.Color.WHITE ? 1 : -1);
     }
+
+    public Piece.Color getWinner() {
+        if (!isGameOver()) return null;
+    
+        Piece.Color currentColor = getCurrentPlayer();
+    
+        boolean noPieces = !hasPieces(currentColor);
+        boolean noMoves = !hasValidMove(currentColor);
+    
+        if (noPieces || noMoves) {
+            return (currentColor == Piece.Color.WHITE) ? Piece.Color.BLACK : Piece.Color.WHITE;
+        }
+    
+        return null; // Shouldn't happen, but fallback
+    }
+    
     
 }
