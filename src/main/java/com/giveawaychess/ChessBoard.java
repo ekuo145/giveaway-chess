@@ -17,7 +17,6 @@ public class ChessBoard {
     private boolean gameOver = false;
     private AntichessUI ui; // Reference to the UI
     private BotLogic bot;
-    private GameAntichess game;
     private GameManager gameManager;
 
     Player blackPlayer;
@@ -32,9 +31,6 @@ public class ChessBoard {
         this.ui = ui;
         this.gameManager = gameManager;
         setUpPieces();
-        if (this.ui != null) {
-            ui.updateBoard(board);
-        }
     }
     
     public ChessBoard() {
@@ -299,9 +295,6 @@ public class ChessBoard {
         if (ui != null) {
             blackPlayer = ui.blackPlayer;
             whitePlayer = ui.whitePlayer;
-        } else if (game != null) {
-            blackPlayer = game.blackPlayer;
-            whitePlayer = game.whitePlayer;
         }
 
         if (!hasValidMove(gameManager.getCurrentPlayer().getColor())) {

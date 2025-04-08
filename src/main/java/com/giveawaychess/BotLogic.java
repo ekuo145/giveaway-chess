@@ -203,7 +203,7 @@ public class BotLogic {
         boolean wasGameOver = board.isGameOver(); // Store the game-over state
 
         List<Move> legalMoves = getAllValidMoves(playerColor);
-        System.out.println("Number of legal moves found: " + legalMoves.size());
+        // System.out.println("Number of legal moves found: " + legalMoves.size());
         if (legalMoves.isEmpty() || wasGameOver) {
             return null; // If game is over, bot should not return any move
         }
@@ -234,7 +234,7 @@ public class BotLogic {
         // **Restore board state after simulation, preserving game-over state**
         board.restoreBoardState(storedBoard, storedPlayer, gameManager, wasGameOver); // Marking as simulation
 
-        System.out.println("Best Move found: " + bestMove);
+        // System.out.println("Best Move found: " + bestMove);
 
         return bestMove;
     }

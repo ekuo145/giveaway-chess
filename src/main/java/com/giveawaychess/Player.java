@@ -3,6 +3,9 @@ package com.giveawaychess;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import javax.swing.Timer;
+
+import com.giveawaychess.AntichessUI.DialogueKey;
 
 public class Player {
     private Piece.Color color;
@@ -112,19 +115,51 @@ public class Player {
             System.out.println("No legal moves available for the bot.");
         }
     }    
+
     public void makeBotMove(Piece[][] board) {
         if (!isBot || botLogic == null) return;
-        
-        Move botMove = botLogic.getMove();
-        if (botMove != null) {
-            chessBoard.handleMove(botMove, gameManager, false);
-            ui.addMoveToHistory(botMove.getFromRow(), botMove.getFromCol(), botMove.getToRow(), botMove.getToCol());
-            ui.updateBoard(board);
-            System.out.println("It is " + getTurnColor() + "'s turn");
-            System.out.println("Game Manager thinks it is " + gameManager.getCurrentPlayer().getColor() + "'s turn");
-            System.out.println("Bot Move Made");
-        } else {
-            System.out.println("Bot has no valid moves.");
+    
+        // Show bot personality's thinking line
+        String thinkingMessage = DialogueKey.getBotMessage(botLogic.botType, DialogueKey.THINKING);
+        if (ui != null) {
+            ui.updateBotDialogue(thinkingMessage);
         }
+    
+        // Simulate bot "thinking..."
+        Timer timer = new Timer(400, e -> {
+            Move botMove = botLogic.getMove();
+    
+            if (botMove != null) {
+                boolean wasCapture = chessBoard.getPieceAt(botMove.getToRow(), botMove.getToCol()) != null;
+    
+                chessBoard.handleMove(botMove, gameManager, false);
+                ui.addMoveToHistory(botMove.getFromRow(), botMove.getFromCol(), botMove.getToRow(), botMove.getToCol());
+                ui.updateBoard(board);
+                ui.getBoardPanel().revalidate();
+                ui.getBoardPanel().repaint();
+
+    
+                // Determine post-move dialogue
+                DialogueKey responseKey;
+                if (chessBoard.isGameOver()) {
+                    responseKey = (chessBoard.getWinner() == this.color)
+                            ? DialogueKey.VICTORY
+                            : DialogueKey.DEFEAT;
+                } else if (wasCapture) {
+                    responseKey = DialogueKey.CAPTURE;
+                } else {
+                    responseKey = DialogueKey.NEUTRAL;
+                }
+    
+                String response = DialogueKey.getBotMessage(botLogic.botType, responseKey);
+                ui.updateBotDialogue(response);
+                } else {
+                System.out.println("Bot has no valid moves.");
+            }
+        });
+    
+        timer.setRepeats(false);
+        timer.start();
     }
+    
 }

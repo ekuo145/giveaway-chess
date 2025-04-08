@@ -10,7 +10,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 public class AntichessUI {
@@ -25,16 +24,10 @@ public class AntichessUI {
     private JButton restartButton;
     private boolean showLegalMoves = true;
 
-    private JLabel player1Avatar;
-    private JLabel player2Avatar;
-    private JLabel dialogueLabel;
-    private JPanel dialoguePanel;
-
-    private Map<String, String> messageOptions;
+    private JLabel botDialogueLabel;
 
     Player whitePlayer;
     Player blackPlayer;
-    Player player;
     
     private ChessBoard board;
     private GameManager gameManager;
@@ -42,73 +35,131 @@ public class AntichessUI {
     private BotType botType;
     private Piece.Color pieceColor;
 
+    public enum DialogueKey {
+        MOVE("Your move!"),
+        CAPTURE("I'll take that."),
+        VICTORY("GG!"),
+        DEFEAT("You got me."),
+        NEUTRAL("Hmm..."),
+        THINKING("The bot is thinking...");
+    
+        private final String message;
+    
+        DialogueKey(String message) {
+            this.message = message;
+        }
+    
+        public String getMessage() {
+            return message;
+        }
+
+        public static String getBotMessage(BotLogic.BotType bot, DialogueKey key) {
+            return switch (bot) {
+                case RANDOM -> switch (key) {
+                    case THINKING -> "Uhh... this one?";
+                    case CAPTURE -> "Aww man, I had to take that?";
+                    case VICTORY -> "Wait... I won?!";
+                    case DEFEAT -> "I was just messing around...";
+                    case NEUTRAL -> "This looks fun!";
+                    default -> throw new IllegalArgumentException("Unexpected value: " + key);
+                };
+                case AGGRESSIVE -> switch (key) {
+                    case THINKING -> "Calculating your doom...";
+                    case CAPTURE -> "I hate giving in to your bait...";
+                    case VICTORY -> "Check... and eliminated.";
+                    case DEFEAT -> "Tch. Just a misstep.";
+                    case NEUTRAL -> "You're delaying the inevitable.";
+                    default -> throw new IllegalArgumentException("Unexpected value: " + key);
+                };
+                case DEFENSIVE -> switch (key) {
+                    case THINKING -> "Patience is a virtue...";
+                    case CAPTURE -> "That was... unfortunate.";
+                    case VICTORY -> "Balance is restored.";
+                    case DEFEAT -> "Hmm. I'll learn from this.";
+                    case NEUTRAL -> "Interesting tension...";
+                    default -> throw new IllegalArgumentException("Unexpected value: " + key);
+                };
+                case SACRIFICIAL -> switch (key) {
+                    case THINKING -> "What shall I give away next?";
+                    case CAPTURE -> "Why am I the one taking things?!";
+                    case VICTORY -> "I sacrificed everything... and won!";
+                    case DEFEAT -> "I gave too much.";
+                    case NEUTRAL -> "To give is to gain!";
+                    default -> throw new IllegalArgumentException("Unexpected value: " + key);
+                };
+                case SWEATY -> switch (key) {
+                    case THINKING -> "Optimizing sequence...";
+                    case CAPTURE -> "That wasn't part of the plan...";
+                    case VICTORY -> "Efficiency wins.";
+                    case DEFEAT -> "Unacceptable. Logging blunder.";
+                    case NEUTRAL -> "Input received.";
+                    default -> throw new IllegalArgumentException("Unexpected value: " + key);
+                };
+                default -> throw new IllegalArgumentException("Unexpected value: " + bot);
+            };
+        }
+    }
+
     // Constructor to set up the UI
     public AntichessUI() {
-        setupDialogueSystem();
-        initializeUI(); // Create and set up the GUI
-        
-        this.gameManager = new GameManager(); // Initialize GameManager
+        this.gameManager = new GameManager();
         this.board = new ChessBoard(this, gameManager);
-        this.player = new Player(Piece.Color.WHITE, false, board, null, gameManager);
-
-        // Prompt user for game mode
+    
+        // Ask game mode
         String[] options = {"Play against Bot", "Play against Human"};
         int choice = JOptionPane.showOptionDialog(null, "Choose your opponent:", "Game Setup",
                 JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
-
-        if (choice == 0) { // Bot game
+    
+        if (choice == 0) { // ✅ BOT GAME
             isBotGame = true;
-            String[] botOptions = {"Play vs Randy", "Play vs Darwin", "Play vs Virgil", "Play vs Levi", "Play vs Mark"};
-            int botChoice = JOptionPane.showOptionDialog(null, "Choose who to play:", "Bot Game Setup",
-                    JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, botOptions, botOptions[0]);
-            if (botChoice == 0) {
-                botType = BotType.RANDOM;
-            } else if (botChoice == 1) {
-                botType = BotType.AGGRESSIVE;
-            } else if (botChoice == 2) {
-                botType = BotType.DEFENSIVE;
-            } else if (botChoice == 3) {
-                botType = BotType.SACRIFICIAL;
-            } else if (botChoice == 4) {
-                botType = BotType.SWEATY;
-            }
-
+    
+            // 1. Choose bot
+            showBotSelectionDialog(); // 👈 pops up the avatar/info dialog
+    
+            // 2. Choose color
             String[] botColorOptions = {"Play as White", "Play as Black"};
-            int botColorChoice = JOptionPane.showOptionDialog(null, "Choose your side:", 
-                    (botChoice == 0 ? "Randy Bot Game Setup" : "Darwin Bot Game Setup"),
+            int colorChoice = JOptionPane.showOptionDialog(null, "Choose your side:", "Color Selection",
                     JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, botColorOptions, botColorOptions[0]);
-            pieceColor = (botColorChoice == 0) ? Piece.Color.WHITE : Piece.Color.BLACK;
-
+    
+            pieceColor = (colorChoice == 0) ? Piece.Color.WHITE : Piece.Color.BLACK;
+    
             if (pieceColor == Piece.Color.WHITE) {
                 whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);
                 blackPlayer = new Player(Piece.Color.BLACK, true, board, botType, gameManager);
                 blackPlayer.setUI(this);
-                flipBoard();
             } else {
                 whitePlayer = new Player(Piece.Color.WHITE, true, board, botType, gameManager);
                 blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);
                 whitePlayer.setUI(this);
             }
-        } else { // Human vs Human
+    
+        } else { // 👥 HUMAN vs HUMAN
+            isBotGame = false;
+            pieceColor = Piece.Color.WHITE; // Default UI color
             whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);
             blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);
-            flipBoard();
         }
-
-        // Set up GameManager and start the game
-        System.out.println("Bot Type Selected: " + botType);
+    
+        // ✅ Init UI after logic is set
+        initializeUI();
+        updateBoard(board.getBoardArray());
+    
+        if (pieceColor == Piece.Color.BLACK) {
+            flipBoard(); // Flip if playing black
+        }
+    
         gameManager.setPlayers(whitePlayer, blackPlayer);
         whitePlayer.setGameManager(gameManager);
         blackPlayer.setGameManager(gameManager);
         board.startGame();
+    
+        // Let bot move first if playing black
         if (whitePlayer.isBot()) {
-            whitePlayer.makeBotMove(board.getBoard());
+            whitePlayer.makeBotMove(board.getBoardArray());
         }
-
-
-    // Set up the custom position on the board when I want to
-        // board.setupCustomPosition();
     }
+    
+
 
     // Method to initialize the UI
     private void initializeUI() {
@@ -123,25 +174,49 @@ public class AntichessUI {
         // Create board buttons and set up action listeners
         boardButtons = new JButton[8][8];
 
-        JPanel topPanel = new JPanel(new FlowLayout());
 
-        // Load avatars
-        player1Avatar = createAvatarLabel("/images/profiles/crackedChess.png");
-        player2Avatar = createAvatarLabel("/images/profiles/sidewaysChess.png");
+        JPanel topPanel = new JPanel(new BorderLayout());
 
-        // Dialogue box
-        dialogueLabel = new JLabel("Welcome to Giveaway Chess!");
-        dialogueLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        if (isBotGame) {
+            String botDisplayName = switch (botType) {
+                case RANDOM -> "Randy (800)";
+                case AGGRESSIVE -> "Darwin (1200)";
+                case DEFENSIVE -> "Virgil (1000)";
+                case SACRIFICIAL -> "Levi (1100)";
+                case SWEATY -> "Mark (1600)";
+                default -> throw new IllegalArgumentException("Unexpected value: " + botType);
+            };
+        
+            ImageIcon avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/crackedChess.png")); // update path accordingly
+            Image scaled = avatarIcon.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+            JLabel avatar = new JLabel(new ImageIcon(scaled));
+            avatar.setPreferredSize(new Dimension(50, 50));
+            avatar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        
+            JLabel botName = new JLabel(botDisplayName);
+            botName.setFont(new Font("SansSerif", Font.BOLD, 16));
+            botName.setForeground(Color.WHITE);
+        
+            botDialogueLabel = new JLabel("The bot is thinking...");
+            botDialogueLabel.setForeground(Color.LIGHT_GRAY);
+            botDialogueLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        
+            JPanel botTextPanel = new JPanel();
+            botTextPanel.setLayout(new BoxLayout(botTextPanel, BoxLayout.Y_AXIS));
+            botTextPanel.setBackground(new Color(50, 50, 50));
+            botTextPanel.add(botName);
+            botTextPanel.add(botDialogueLabel);
+        
+            JPanel botPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+            botPanel.setBackground(new Color(50, 50, 50));
+            botPanel.add(avatar);
+            botPanel.add(botTextPanel);
+        
+            topPanel.add(botPanel, BorderLayout.WEST);
+        }
+        
 
-        dialoguePanel = new JPanel();
-        dialoguePanel.add(dialogueLabel);
 
-        // Add elements to top panel
-        topPanel.add(player1Avatar);
-        topPanel.add(dialoguePanel);
-        topPanel.add(player2Avatar);
-
-        // Add to main panel
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
         // Add the top-left empty corner
@@ -165,7 +240,7 @@ public class AntichessUI {
 
         // Add Restart Button
         restartButton = new JButton("Restart Game");
-        restartButton.addActionListener(e -> resetGame());
+        restartButton.addActionListener(e -> restartGame());
 
         // Add Help Button
         JButton helpButton = new JButton("Rules");
@@ -189,20 +264,21 @@ public class AntichessUI {
 
         // Add row labels and board buttons
         for (int row = 0; row < 8; row++) {
+            int modelRow = 7 - row;  // Flip row index so white is at bottom
             // Add row label on the left side
-            JLabel rowLabel = new JLabel(Integer.toString(1 + row), SwingConstants.CENTER); // Row label (reverse order)
+            JLabel rowLabel = new JLabel(Integer.toString(8 - row), SwingConstants.CENTER); // Row label (reverse order)
             rowLabel.setPreferredSize(new Dimension(80, 80)); // Adjust size to match the board buttons
             boardPanel.add(rowLabel);
 
             for (int col = 0; col < 8; col++) {
+                int modelCol = col;
                 JButton button = new JButton();
-                boardButtons[row][col] = button;
+                boardButtons[modelRow][modelCol] = button; // match internal position
 
-                if ((row + col) % 2 == 0) {
-                    button.setBackground(Color.GRAY); // Dark square
+                if ((modelRow + modelCol) % 2 == 0) {
+                    button.setBackground(Color.GRAY);
                 } else {
-                    button.setBackground(Color.WHITE);// Light square
-                    
+                    button.setBackground(Color.WHITE);
                 }
 
                 button.setOpaque(true);
@@ -210,8 +286,8 @@ public class AntichessUI {
                 button.setPreferredSize(new Dimension(80, 80)); // Make sure the buttons are square and compact
 
                 // Add action listener to each button to handle user clicks
-                final int currentRow = row;
-                final int currentCol = col;
+                final int currentRow = modelRow;
+                final int currentCol = modelCol;
                 button.addActionListener(e -> handleBoardClick(currentRow, currentCol));
 
                 boardPanel.add(button);
@@ -276,7 +352,7 @@ public class AntichessUI {
                 }
                 return;
             }
-            System.out.println("Piece String: " + movingPiece.toString());
+            // System.out.println("Piece String: " + movingPiece.toString());
             Move move = new Move(selectedSquare[0], selectedSquare[1], row, col, movingPiece); // Declare the move variable
             boolean moveSuccessful = board.handleMove(move, gameManager, false);
             // System.out.println("Move Attempted");
@@ -293,67 +369,38 @@ public class AntichessUI {
         }
     }
 
-    private void setupDialogueSystem() {
-        // Predefined messages
-        messageOptions = new HashMap<>();
-        messageOptions.put("move", "Your move!");
-        messageOptions.put("capture", "Nice capture!");
-        messageOptions.put("botThinking", "The bot is thinking...");
-        messageOptions.put("check", "Check!");
-        messageOptions.put("win", "Congratulations, you win!");
-    }
-
-
     private void flipBoard() {
         isBoardFlipped = !isBoardFlipped;
-        // System.out.println("Board Flipped is " + isBoardFlipped);
         boardPanel.removeAll(); // Clear the boardPanel for re-layout
-        
-        // Re-add the top-left empty corner
-        boardPanel.add(new JLabel("")); // Top-left corner is empty
-
+    
+        // Add top-left corner empty
+        boardPanel.add(new JLabel(""));
+    
         char[] columns = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
-        int[] rows = {1, 2, 3, 4, 5, 6, 7, 8};
-        int[] flippedRows = {8, 7, 6, 5, 4, 3, 2, 1};
-
-        JButton[][] flippedButtons = new JButton[8][8];
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-                // Flip the button positions
-                flippedButtons[row][col] = boardButtons[7 - row][7 - col];
-            }
+    
+        // Flip column labels to match orientation
+        for (int i = 0; i < 8; i++) {
+            int colIndex = isBoardFlipped ? 7 - i : i;
+            JLabel colLabel = new JLabel(Character.toString(columns[colIndex]), SwingConstants.CENTER);
+            colLabel.setPreferredSize(new Dimension(80, 80));
+            boardPanel.add(colLabel);
         }
-
-        // Add column labels
-        for (char column : columns) {
-            JLabel colLabel = new JLabel(Character.toString(column), SwingConstants.CENTER);
-            colLabel.setPreferredSize(new Dimension(80, 80)); // Adjust to match button size
-            boardPanel.add(colLabel); // Add to the top row
-        }
-
-        // Re-add row labels and board buttons in flipped order
+    
+        // Add board squares
         for (int row = 0; row < 8; row++) {
-            if (isBoardFlipped) {
-                JLabel rowLabel = new JLabel(Integer.toString(flippedRows[row]), SwingConstants.CENTER); // Row label
-                rowLabel.setPreferredSize(new Dimension(80, 80)); // Adjust size to match the board buttons
-                boardPanel.add(rowLabel);
-            } else {
-                // Add row label on the left side
-                JLabel rowLabel = new JLabel(Integer.toString(rows[row]), SwingConstants.CENTER); // Row label
-                rowLabel.setPreferredSize(new Dimension(80, 80)); // Adjust size to match the board buttons
-                boardPanel.add(rowLabel);
-            }
-
+            int displayRow = isBoardFlipped ? row : 7 - row;
+            int labelRow = isBoardFlipped ? row + 1 : 8 - row;
+            JLabel rowLabel = new JLabel(Integer.toString(labelRow), SwingConstants.CENTER);
+            rowLabel.setPreferredSize(new Dimension(80, 80));
+            boardPanel.add(rowLabel);
+    
             for (int col = 0; col < 8; col++) {
-                int displayRow = isBoardFlipped ? 7 - row : row;
-                boardPanel.add(boardButtons[displayRow][col]); // Add the button in flipped order
+                int displayCol = isBoardFlipped ? 7 - col : col;
+                boardPanel.add(boardButtons[displayRow][displayCol]);
             }
         }
     
-        // Update the board colors to ensure correct pattern after flip
         resetBoardColors();
-    
-        // Refresh the UI to display the changes
         boardPanel.revalidate();
         boardPanel.repaint();
     }
@@ -536,7 +583,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         // Update the UI and game state after a move is made
         Piece [][] boardArray = this.board.getBoard();
         // System.out.println("Move Made");
-        player.switchTurn();
+        gameManager.getCurrentPlayer().switchTurn();
         if (isWhiteTurn) {
             if (whitePlayer.isBot()) {
                 whitePlayer.makeBotMove(boardArray);
@@ -557,30 +604,6 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
             }
         }
     }
-    private void resetGame() {
-        // Reset game-related state
-        this.board = new ChessBoard(this, gameManager);
-        this.player = new Player(Piece.Color.WHITE, false, board, null, gameManager);
-    
-        // Reset players
-        this.whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);
-        this.blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);
-    
-        // Start the game again
-        this.gameManager = new GameManager();
-        // Assign players to gameManager
-        gameManager.setPlayers(whitePlayer, blackPlayer);
-        whitePlayer.setGameManager(gameManager);
-        blackPlayer.setGameManager(gameManager);
-    
-        board.startGame();
-
-        // Clear the history table
-        tableModel.setRowCount(0);
-    
-        // Reset the board and flip back to defaults
-        updateBoard(board.getBoard());
-    }
 
     private void restartGame() {
         // Close the current game window properly
@@ -595,18 +618,6 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         selectedSquare = null; // Reset selected square
         isBoardFlipped = false; // Reset board orientation
         isBotGame = false; // Ensure correct bot behavior
-    
-        // Reinitialize board and players
-        board = new ChessBoard(this, gameManager);
-        whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);
-        blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);
-    
-        // Reinitialize GameManager
-        gameManager = new GameManager();
-        // Assign players to gameManager
-        gameManager.setPlayers(whitePlayer, blackPlayer);
-        whitePlayer.setGameManager(gameManager);
-        blackPlayer.setGameManager(gameManager);
     
         // Ensure UI resets correctly
         tableModel.setRowCount(0); // Clear move history
@@ -638,7 +649,7 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
     
         startConfettiAnimation(frame);
     
-        Timer restartTimer = new Timer(5000, e -> resetGame());
+        Timer restartTimer = new Timer(5000, e -> restartGame());
         restartTimer.setRepeats(false);
         restartTimer.start();
     }    
@@ -696,27 +707,153 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
     }
 
     private JLabel createAvatarLabel(String imagePath) {
-        ImageIcon icon = new ImageIcon(imagePath);
-        Image scaledImage = icon.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
-        return new JLabel(new ImageIcon(scaledImage));
+        URL imageUrl = getClass().getResource(imagePath);
+        if (imageUrl == null) {
+            System.err.println("Avatar image not found: " + imagePath);
+            return new JLabel();
+        }
+        ImageIcon icon = new ImageIcon(imageUrl);
+        Image scaledImage = icon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+        JLabel label = new JLabel(new ImageIcon(scaledImage));
+        label.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+        return label;
     }
 
     // Update dialogue message dynamically
-    public void updateDialogue(String key) {
-        if (messageOptions.containsKey(key)) {
-            dialogueLabel.setText(messageOptions.get(key));
-        } else {
-            dialogueLabel.setText("Unknown action.");
+    public void updateDialogue(DialogueKey key) {
+        if (isBotGame && botDialogueLabel != null) {
+            botDialogueLabel.setText(key.getMessage());
+        }
+    }    
+    
+    public void updateBotDialogue(String message) {
+        if (isBotGame && botDialogueLabel != null) {
+            botDialogueLabel.setText(message);
         }
     }
 
     private void checkMandatoryCapture() {
         boolean hasMandatoryCapture = board.hasMandatoryCapture(gameManager.getCurrentPlayer().getColor(), board.getBoard());
-        
+    
         if (hasMandatoryCapture) {
-            JOptionPane.showMessageDialog(null, "You have at least one mandatory capture!", "Move Check", JOptionPane.INFORMATION_MESSAGE);
+            highlightMandatoryCaptures();
+            JOptionPane.showMessageDialog(null, "You have at least one mandatory capture! Red squares show capture options.", "Move Check", JOptionPane.INFORMATION_MESSAGE);
         } else {
+            resetBoardColors();
             JOptionPane.showMessageDialog(null, "No capture moves available!", "Move Check", JOptionPane.WARNING_MESSAGE);
         }
     }
+    
+
+    public void highlightMandatoryCaptures() {
+        resetBoardColors();
+        Piece.Color currentColor = gameManager.getCurrentPlayer().getColor();
+        Piece[][] currentBoard = board.getBoard();
+    
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = currentBoard[row][col];
+                if (piece != null && piece.getColor() == currentColor) {
+                    List<int[]> validMoves = board.getValidMoves(row, col);
+                    for (int[] move : validMoves) {
+                        Piece target = currentBoard[move[0]][move[1]];
+                        if (target != null && target.getColor() != currentColor) {
+                            boardButtons[move[0]][move[1]].setBackground(Color.RED);
+                            boardButtons[row][col].setBackground(new Color(255, 100, 100)); // light red for source
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    public JPanel getBoardPanel() {
+        return boardPanel;
+    }
+    
+    private void showBotSelectionDialog() {
+        JDialog botDialog = new JDialog((Frame) null, "Choose a Bot", true);
+        botDialog.setLayout(new BorderLayout());
+    
+        String[] botNames = {"Mark", "Levi", "Virgil", "Darwin", "Randy"};
+        BotLogic.BotType[] botTypes = {
+            BotLogic.BotType.SWEATY,
+            BotLogic.BotType.SACRIFICIAL,
+            BotLogic.BotType.DEFENSIVE,
+            BotLogic.BotType.AGGRESSIVE,
+            BotLogic.BotType.RANDOM
+        };
+        String[] botDescriptions = {
+            "🤖 Mark (⭐⭐⭐⭐⭐)\n\nCalculated, optimal, and serious. Tryhard mode: ON.",
+            "🎭 Levi (⭐⭐)\n\nEmbraces chaos. Sacrifices recklessly, but cleverly.",
+            "🛡️ Virgil (⭐⭐⭐)\n\nCareful and patient. Avoids risky trades.",
+            "🔥 Darwin (⭐⭐⭐⭐)\n\nRuthless attacker. Will give anything to escape fast.",
+            "🃏 Randy (⭐)\n\nPlays completely randomly — no logic, just vibes."
+        };
+        String[] avatarPaths = {
+            "/images/profiles/mark.png",
+            "/images/profiles/levi.png",
+            "/images/profiles/virgil.png",
+            "/images/profiles/darwin.png",
+            "/images/profiles/randy.png"
+        };
+    
+        JPanel listPanel = new JPanel(new GridLayout(botNames.length, 1, 10, 10));
+        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
+    
+        JLabel avatarPreview = new JLabel();
+        avatarPreview.setHorizontalAlignment(SwingConstants.CENTER);
+        avatarPreview.setPreferredSize(new Dimension(100, 100));
+    
+        JTextArea infoBox = new JTextArea();
+        infoBox.setEditable(false);
+        infoBox.setWrapStyleWord(true);
+        infoBox.setLineWrap(true);
+        infoBox.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        infoBox.setMargin(new Insets(10, 10, 10, 10));
+    
+        JButton playButton = new JButton("Play");
+        playButton.setEnabled(false);
+    
+        final BotLogic.BotType[] selected = {null};
+    
+        for (int i = 0; i < botNames.length; i++) {
+            String name = botNames[i];
+            BotLogic.BotType type = botTypes[i];
+            String description = botDescriptions[i];
+            String avatarPath = avatarPaths[i];
+    
+            JButton botButton = new JButton(name);
+            botButton.setHorizontalAlignment(SwingConstants.LEFT);
+            botButton.addActionListener(e -> {
+                selected[0] = type;
+                playButton.setEnabled(true);
+                infoBox.setText(description);
+    
+                ImageIcon icon = new ImageIcon(getClass().getResource(avatarPath));
+                Image scaled = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+                avatarPreview.setIcon(new ImageIcon(scaled));
+            });
+            listPanel.add(botButton);
+        }
+    
+        rightPanel.add(avatarPreview, BorderLayout.NORTH);
+        rightPanel.add(new JScrollPane(infoBox), BorderLayout.CENTER);
+    
+        playButton.addActionListener(e -> {
+            if (selected[0] != null) {
+                botType = selected[0];
+                botDialog.dispose();
+            }
+        });
+    
+        botDialog.add(listPanel, BorderLayout.WEST);
+        botDialog.add(rightPanel, BorderLayout.CENTER);
+        botDialog.add(playButton, BorderLayout.SOUTH);
+    
+        botDialog.setSize(600, 350);
+        botDialog.setLocationRelativeTo(null);
+        botDialog.setVisible(true);
+    }
+    
 }
