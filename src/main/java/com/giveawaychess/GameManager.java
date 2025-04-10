@@ -5,6 +5,8 @@ public class GameManager {
     private Player blackPlayer;
     private Player currentPlayer;
 
+    private int turnNumber = 0;
+
     public GameManager() {
         // Initially, players are null. They will be set after creation.
     }
@@ -27,8 +29,17 @@ public class GameManager {
         currentPlayer = (currentPlayer == whitePlayer) ? blackPlayer : whitePlayer;
     }
 
-    public boolean isNewbieMode() {
-        return false;
+    public int getTurnNumber() {
+        return turnNumber;
+    }
+    
+    public void incrementTurnNumber() {
+        turnNumber++;
+        // System.out.println("✅ Turn number incremented to: " + turnNumber);
+    }
+    
+    public void resetTurnNumber() {
+        turnNumber = 0;
     }
 }
 

@@ -40,33 +40,33 @@ public class ChessBoard {
     // Method to set up the pieces
     public void setUpPieces() {
         // Set up white pieces
-        board[0][0] = new Piece(Piece.PieceType.ROOK, Piece.Color.WHITE);
-        board[0][1] = new Piece(Piece.PieceType.KNIGHT, Piece.Color.WHITE);
-        board[0][2] = new Piece(Piece.PieceType.BISHOP, Piece.Color.WHITE);
-        board[0][3] = new Piece(Piece.PieceType.QUEEN, Piece.Color.WHITE);
-        board[0][4] = new Piece(Piece.PieceType.KING, Piece.Color.WHITE);
-        board[0][5] = new Piece(Piece.PieceType.BISHOP, Piece.Color.WHITE);
-        board[0][6] = new Piece(Piece.PieceType.KNIGHT, Piece.Color.WHITE);
-        board[0][7] = new Piece(Piece.PieceType.ROOK, Piece.Color.WHITE);
+        board[0][0] = createPiece(Piece.PieceType.ROOK, Piece.Color.WHITE);
+        board[0][1] = createPiece(Piece.PieceType.KNIGHT, Piece.Color.WHITE);
+        board[0][2] = createPiece(Piece.PieceType.BISHOP, Piece.Color.WHITE);
+        board[0][3] = createPiece(Piece.PieceType.QUEEN, Piece.Color.WHITE);
+        board[0][4] = createPiece(Piece.PieceType.KING, Piece.Color.WHITE);
+        board[0][5] = createPiece(Piece.PieceType.BISHOP, Piece.Color.WHITE);
+        board[0][6] = createPiece(Piece.PieceType.KNIGHT, Piece.Color.WHITE);
+        board[0][7] = createPiece(Piece.PieceType.ROOK, Piece.Color.WHITE);
 
         // Set up white pawns
         for (int i = 0; i < 8; i++) {
-            board[1][i] = new Piece(Piece.PieceType.PAWN, Piece.Color.WHITE);
+            board[1][i] = createPiece(Piece.PieceType.PAWN, Piece.Color.WHITE);
         }
 
         // Set up black pieces
-        board[7][0] = new Piece(Piece.PieceType.ROOK, Piece.Color.BLACK);
-        board[7][1] = new Piece(Piece.PieceType.KNIGHT, Piece.Color.BLACK);
-        board[7][2] = new Piece(Piece.PieceType.BISHOP, Piece.Color.BLACK);
-        board[7][3] = new Piece(Piece.PieceType.QUEEN, Piece.Color.BLACK);
-        board[7][4] = new Piece(Piece.PieceType.KING, Piece.Color.BLACK);
-        board[7][5] = new Piece(Piece.PieceType.BISHOP, Piece.Color.BLACK);
-        board[7][6] = new Piece(Piece.PieceType.KNIGHT, Piece.Color.BLACK);
-        board[7][7] = new Piece(Piece.PieceType.ROOK, Piece.Color.BLACK);
+        board[7][0] = createPiece(Piece.PieceType.ROOK, Piece.Color.BLACK);
+        board[7][1] = createPiece(Piece.PieceType.KNIGHT, Piece.Color.BLACK);
+        board[7][2] = createPiece(Piece.PieceType.BISHOP, Piece.Color.BLACK);
+        board[7][3] = createPiece(Piece.PieceType.QUEEN, Piece.Color.BLACK);
+        board[7][4] = createPiece(Piece.PieceType.KING, Piece.Color.BLACK);
+        board[7][5] = createPiece(Piece.PieceType.BISHOP, Piece.Color.BLACK);
+        board[7][6] = createPiece(Piece.PieceType.KNIGHT, Piece.Color.BLACK);
+        board[7][7] = createPiece(Piece.PieceType.ROOK, Piece.Color.BLACK);
 
         // Set up black pawns
         for (int i = 0; i < 8; i++) {
-            board[6][i] = new Piece(Piece.PieceType.PAWN, Piece.Color.BLACK);
+            board[6][i] = createPiece(Piece.PieceType.PAWN, Piece.Color.BLACK);
         }
     }
 
@@ -159,11 +159,13 @@ public class ChessBoard {
     
 
     public boolean hasMandatoryCapture(Piece.Color currentPlayerColor, Piece[][] board) { 
+        // System.out.println("Checking mandatory captures for " + currentPlayerColor);
         for (int row = 0; row < board.length; row++) {
             for (int col = 0; col < board[row].length; col++) {
                 Piece piece = board[row][col];
                 if (piece != null && piece.getColor() == currentPlayerColor) {
                     if (canCapture(piece, row, col, board)) {
+                        // System.out.println("Capture possible for " + piece.getType() + " at (" + row + "," + col + ")");
                         return true;  // If any capture is possible, return true
                     }
                 }
@@ -179,6 +181,7 @@ public class ChessBoard {
                 // The piece can only capture if there is an opponent's piece at the target location    
                     if (board[endRow][endCol] != null && board[endRow][endCol].getColor() != piece.getColor()) {
                         if (piece.canMove(startRow, startCol, endRow, endCol, board)) {
+                            // System.out.println("Can move from " + startRow + "," + startCol + " to capture " + endRow + "," + endCol);
                         // System.out.println("Capture available for piece at (" + startRow + ", " + startCol + ")");
                         return true;
                     }
@@ -188,12 +191,19 @@ public class ChessBoard {
         return false;
     }
 
+
     public boolean isCaptureMove(int startRow, int startCol, int endRow, int endCol) {
+        // if (!isWithinBounds(startRow, startCol) || !isWithinBounds(endRow, endCol)) return false;
         Piece startPiece = board[startRow][startCol];
         Piece endPiece = board[endRow][endCol];
     
-        // A capture move happens when the target square has an opponent's piece
-        return endPiece != null && startPiece.getColor() != endPiece.getColor() || isEnPassantMove(startRow, startCol, endRow, endCol);
+        // Must be a legal move to count as a capture
+        if (startPiece == null || !startPiece.canMove(startRow, startCol, endRow, endCol, board)) {
+            return false;
+        }
+    
+        return (endPiece != null && startPiece.getColor() != endPiece.getColor())
+               || isEnPassantMove(startRow, startCol, endRow, endCol);
     }
 
     private void checkPawnPromotion(int endRow, int endCol, boolean randomPromotion) {
@@ -228,33 +238,33 @@ public class ChessBoard {
     if (choice != null) {
         switch (choice) {
             case "Queen":
-                newPiece = new Piece(Piece.PieceType.QUEEN, (color));
+                newPiece = createPiece(Piece.PieceType.QUEEN, (color));
                 break;
             case "Rook":
-                newPiece = new Piece(Piece.PieceType.ROOK,(color));
+                newPiece = createPiece(Piece.PieceType.ROOK,(color));
                 break;
             case "Bishop":
-                newPiece = new Piece(Piece.PieceType.BISHOP, (color));
+                newPiece = createPiece(Piece.PieceType.BISHOP, (color));
                 break;
             case "Knight":
-                newPiece = new Piece(Piece.PieceType.KNIGHT, (color));
+                newPiece = createPiece(Piece.PieceType.KNIGHT, (color));
                 break;
             case "King":
-                newPiece = new Piece(Piece.PieceType.KING, (color));
+                newPiece = createPiece(Piece.PieceType.KING, (color));
                 break;
             default:
-                newPiece = new Piece(Piece.PieceType.QUEEN, (color)); // Default to Queen if no valid choice
+                newPiece = createPiece(Piece.PieceType.QUEEN, (color)); // Default to Queen if no valid choice
                 break;
         }
     } else {
-        newPiece = new Piece(Piece.PieceType.QUEEN, (color)); // Default to Queen if no choice is made
+        newPiece = createPiece(Piece.PieceType.QUEEN, (color)); // Default to Queen if no choice is made
     }
         board[row][col] = newPiece;
     }
 
     private void makeRandomPromotionMove(int row, int col, Piece.Color color) {
         Piece newPiece;
-        Piece[] promotionOptions = {new Piece(Piece.PieceType.QUEEN, (color)), new Piece(Piece.PieceType.ROOK,(color)), new Piece(Piece.PieceType.BISHOP,(color)), new Piece(Piece.PieceType.KNIGHT,(color)), new Piece(Piece.PieceType.KING,(color))};
+        Piece[] promotionOptions = {createPiece(Piece.PieceType.QUEEN, (color)), createPiece(Piece.PieceType.ROOK,(color)), createPiece(Piece.PieceType.BISHOP,(color)), createPiece(Piece.PieceType.KNIGHT,(color)), createPiece(Piece.PieceType.KING,(color))};
         Random random = new Random();
         newPiece = promotionOptions[random.nextInt(promotionOptions.length)];
         board[row][col] = newPiece;
@@ -423,7 +433,7 @@ private List<Move> moveHistory = new ArrayList<>();
     
         // If the moved piece was a pawn that had been promoted, revert it back to a pawn
         if (lastMove.wasPromotion()) {
-            board[startRow][startCol] = new Piece(PieceType.PAWN, movedPiece.getColor());
+            board[startRow][startCol] = createPiece(PieceType.PAWN, movedPiece.getColor());
         }
     
         // Restore turn
@@ -471,12 +481,12 @@ private List<Move> moveHistory = new ArrayList<>();
 
         // Set up white pawns
         for (int i = 0; i < 1; i++) {
-            board[6][i] = new Piece(Piece.PieceType.PAWN, Piece.Color.WHITE);
+            board[6][i] = createPiece(Piece.PieceType.PAWN, Piece.Color.WHITE);
         }
 
         // Set up black pawns
         for (int i = 0; i < 1; i++) {
-            board[1][i] = new Piece(Piece.PieceType.PAWN, Piece.Color.BLACK);
+            board[1][i] = createPiece(Piece.PieceType.PAWN, Piece.Color.BLACK);
         }
         printBoard();
     }
@@ -557,7 +567,9 @@ private List<Move> moveHistory = new ArrayList<>();
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 if (original[row][col] != null) {
-                    copy[row][col] = new Piece(original[row][col].getType(), original[row][col].getColor());
+                    Piece cloned = new Piece(original[row][col].getType(), original[row][col].getColor());
+                    cloned.setChessBoard(this); // 👈 Ensure proper context
+                    copy[row][col] = cloned;
                 }
             }
         }
@@ -588,5 +600,14 @@ private List<Move> moveHistory = new ArrayList<>();
         return null; // Shouldn't happen, but fallback
     }
     
-    
+    public GameManager getGameManager() {
+        return this.gameManager;
+    }
+
+    private Piece createPiece(Piece.PieceType type, Piece.Color color) {
+        Piece piece = new Piece(type, color);
+        piece.setChessBoard(this);
+        return piece;
+    }
+        
 }

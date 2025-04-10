@@ -93,24 +93,36 @@ public class Piece {
 
     // Rook moves in straight lines (either row or column must be the same)
     public boolean canMoveRook(int startRow, int startCol, int endRow, int endCol, Piece[][] board) {
-        if (startRow != endRow && startCol != endCol) return false;
-        // Check if path is clear (no pieces between start and end)
-        if (startRow == endRow) {  // Horizontal movement
+        if (startRow != endRow && startCol != endCol) {
+            // System.out.println("Invalid rook move: not straight line");
+            return false;
+        }
+    
+        if (startRow == endRow) {
             int minCol = Math.min(startCol, endCol);
             int maxCol = Math.max(startCol, endCol);
             for (int col = minCol + 1; col < maxCol; col++) {
-                if (board[startRow][col] != null) return false;
+                // System.out.println("Checking horizontal block at (" + startRow + "," + col + ")");
+                if (board[startRow][col] != null) {
+                    // System.out.println("Blocked by " + board[startRow][col].getType());
+                    return false;
+                }
             }
-        } else {  // Vertical movement
+        } else {
             int minRow = Math.min(startRow, endRow);
             int maxRow = Math.max(startRow, endRow);
             for (int row = minRow + 1; row < maxRow; row++) {
-                if (board[row][startCol] != null) return false;
+                // System.out.println("Checking vertical block at (" + row + "," + startCol + ")");
+                if (board[row][startCol] != null) {
+                    // System.out.println("Blocked by " + board[row][startCol].getType());
+                    return false;
+                }
             }
         }
+    
         return true;
     }
-
+    
     // Bishop moves diagonally
     public boolean canMoveBishop(int startRow, int startCol, int endRow, int endCol, Piece[][] board) {
         if (Math.abs(startRow - endRow) == 0 || Math.abs(startCol - endCol) == 0) return false;
@@ -150,7 +162,11 @@ public class Piece {
                 }
                 // Two squares forward move
                 else if ((startRow == 1 && color == Color.WHITE) || (startRow == 6 && color == Color.BLACK)) {
-                // Disable two-square move if Newbie mode is on
+                    // 🚫 Newbie bots can't use the 2-square move
+                    if (chessBoard != null && chessBoard.getGameManager().getCurrentPlayer().isNewbie()) {
+                        return false;
+                    }
+
                     int intermediateRow = startRow + direction;
                     if (startRow + 2 * direction == endRow && board[intermediateRow][startCol] == null) {
                         return true;
@@ -319,6 +335,10 @@ private void generatePawnMoves(int row, int col, Piece[][] board, List<Move> pot
 
 private boolean isWithinBounds(int row, int col) {
     return row >= 0 && row < 8 && col >= 0 && col < 8;
+}
+
+public void setChessBoard(ChessBoard board) {
+    this.chessBoard = board;
 }
 
 }

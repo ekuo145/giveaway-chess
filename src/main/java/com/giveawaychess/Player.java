@@ -6,6 +6,7 @@ import java.util.Random;
 import javax.swing.Timer;
 
 import com.giveawaychess.AntichessUI.DialogueKey;
+import com.giveawaychess.BotLogic.BotType;
 
 public class Player {
     private Piece.Color color;
@@ -14,16 +15,37 @@ public class Player {
     private GameManager gameManager;
     private AntichessUI ui;
     private BotLogic botLogic; 
+    private BotProfile profile;
 
     private Piece.Color turnColor = Piece.Color.WHITE;
 
-    public Player(Piece.Color color, boolean isBot, ChessBoard chessBoard, BotLogic.BotType botType, GameManager gameManager) {
+
+    public static Player withBotType(Piece.Color color, ChessBoard chessBoard, BotLogic.BotType type, GameManager gm) {
+        return new Player(color, true, chessBoard, type, gm);
+    }
+    
+    public static Player withProfile(Piece.Color color, ChessBoard chessBoard, BotProfile profile, GameManager gm) {
+        return new Player(color, true, chessBoard, profile, gm);
+    }
+    
+    public Player(Piece.Color color, boolean isBot, ChessBoard chessBoard, BotType botType, GameManager gameManager) {
         this.color = color;
         this.isBot = isBot;
         this.chessBoard = chessBoard; // Initialize chessBoard
         this.gameManager = gameManager;
         if (isBot) {
             this.botLogic = new BotLogic(chessBoard, gameManager, botType);
+        }
+    }
+
+    public Player(Piece.Color color, boolean isBot, ChessBoard chessBoard, BotProfile profile, GameManager gameManager) {
+        this.color = color;
+        this.isBot = isBot;
+        this.chessBoard = chessBoard; // Initialize chessBoard
+        this.gameManager = gameManager;
+        if (isBot && profile != null) {
+            this.profile = profile;
+            this.botLogic = new BotLogic(chessBoard, gameManager, profile);
         }
     }
 
@@ -39,10 +61,12 @@ public class Player {
 
     public void setChessBoard(ChessBoard chessBoard) {
         this.chessBoard = chessBoard;
+    
         if (isBot && botLogic != null) {
-            botLogic = new BotLogic(chessBoard, gameManager, botLogic.botType);
+            botLogic.setBoard(chessBoard);
         }
     }
+    
 
     public void setGameManager(GameManager gameManager) {
         this.gameManager = gameManager;
@@ -118,6 +142,13 @@ public class Player {
 
     public void makeBotMove(Piece[][] board) {
         if (!isBot || botLogic == null) return;
+
+        if (botLogic.shouldSkipTurn()) {
+            // System.out.println("Bot skips turn (verified at top).");
+            ui.updateBotDialogue("Skipping this one...");
+            ui.onMoveMade();
+            return;
+        }
     
         // Show bot personality's thinking line
         String thinkingMessage = DialogueKey.getBotMessage(botLogic.botType, DialogueKey.THINKING);
@@ -153,13 +184,15 @@ public class Player {
     
                 String response = DialogueKey.getBotMessage(botLogic.botType, responseKey);
                 ui.updateBotDialogue(response);
-                } else {
-                System.out.println("Bot has no valid moves.");
-            }
+                }
         });
     
         timer.setRepeats(false);
         timer.start();
+    }
+
+    public boolean isNewbie() {
+        return profile != null && "Newbie".equals(profile.wildCard);
     }
     
 }

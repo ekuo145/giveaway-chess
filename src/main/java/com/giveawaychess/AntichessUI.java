@@ -10,7 +10,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.io.File;
+import java.io.IOException;
 
 public class AntichessUI {
     private JButton[][] boardButtons; // 8x8 array of buttons representing the board
@@ -23,6 +26,8 @@ public class AntichessUI {
     private boolean isBotGame = false;
     private JButton restartButton;
     private boolean showLegalMoves = true;
+    private boolean skipJustHappened = false;
+
 
     private JLabel botDialogueLabel;
 
@@ -31,6 +36,7 @@ public class AntichessUI {
     
     private ChessBoard board;
     private GameManager gameManager;
+    private BotProfile selectedBotProfile;
 
     private BotType botType;
     private Piece.Color pieceColor;
@@ -124,20 +130,24 @@ public class AntichessUI {
             pieceColor = (colorChoice == 0) ? Piece.Color.WHITE : Piece.Color.BLACK;
     
             if (pieceColor == Piece.Color.WHITE) {
-                whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);
-                blackPlayer = new Player(Piece.Color.BLACK, true, board, botType, gameManager);
+                whitePlayer = new Player(Piece.Color.WHITE, false, board, (BotType) null, gameManager);
+                blackPlayer = (selectedBotProfile != null)
+                    ? new Player(Piece.Color.BLACK, true, board, selectedBotProfile, gameManager)
+                    : new Player(Piece.Color.BLACK, true, board, botType, gameManager);
                 blackPlayer.setUI(this);
             } else {
-                whitePlayer = new Player(Piece.Color.WHITE, true, board, botType, gameManager);
-                blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);
+                whitePlayer = (selectedBotProfile != null)
+                    ? new Player(Piece.Color.WHITE, true, board, selectedBotProfile, gameManager)
+                    : new Player(Piece.Color.WHITE, true, board, botType, gameManager);
+                blackPlayer = new Player(Piece.Color.BLACK, false, board, (BotType) null, gameManager);
                 whitePlayer.setUI(this);
             }
     
         } else { // 👥 HUMAN vs HUMAN
             isBotGame = false;
             pieceColor = Piece.Color.WHITE; // Default UI color
-            whitePlayer = new Player(Piece.Color.WHITE, false, board, null, gameManager);
-            blackPlayer = new Player(Piece.Color.BLACK, false, board, null, gameManager);
+            whitePlayer = new Player(Piece.Color.WHITE, false, board, (BotType) null, gameManager);
+            blackPlayer = new Player(Piece.Color.BLACK, false, board, (BotType) null, gameManager);
         }
     
         // ✅ Init UI after logic is set
@@ -178,16 +188,40 @@ public class AntichessUI {
         JPanel topPanel = new JPanel(new BorderLayout());
 
         if (isBotGame) {
-            String botDisplayName = switch (botType) {
-                case RANDOM -> "Randy (800)";
-                case AGGRESSIVE -> "Darwin (1200)";
-                case DEFENSIVE -> "Virgil (1000)";
-                case SACRIFICIAL -> "Levi (1100)";
-                case SWEATY -> "Mark (1600)";
+            String botDisplayName;
+            ImageIcon avatarIcon;
+            if (selectedBotProfile != null) {
+                botDisplayName = selectedBotProfile.botName + " (Custom)";
+                avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/defaultBot.png"));
+            } else if (botType != null) {
+            switch (botType) {
+                case RANDOM -> {
+                    botDisplayName = "Randy (800)";
+                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Randy.png"));
+                }
+                case AGGRESSIVE -> {
+                    botDisplayName = "Darwin (1200)";
+                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Darwin.png"));
+                }
+                case DEFENSIVE -> {
+                    botDisplayName = "Virgil (1000)";
+                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Virgil.png"));
+                }
+                case SACRIFICIAL -> {
+                    botDisplayName = "Levi (1100)";
+                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Levi.png"));
+                }
+                case SWEATY -> {
+                    botDisplayName = "Mark (1600)";
+                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Mark.png"));
+                }
                 default -> throw new IllegalArgumentException("Unexpected value: " + botType);
             };
+        } else {
+            botDisplayName = "Unknown Bot";
+            avatarIcon = new ImageIcon(); // empty placeholder
+        }
         
-            ImageIcon avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/crackedChess.png")); // update path accordingly
             Image scaled = avatarIcon.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
             JLabel avatar = new JLabel(new ImageIcon(scaled));
             avatar.setPreferredSize(new Dimension(50, 50));
@@ -354,6 +388,7 @@ public class AntichessUI {
             }
             // System.out.println("Piece String: " + movingPiece.toString());
             Move move = new Move(selectedSquare[0], selectedSquare[1], row, col, movingPiece); // Declare the move variable
+            // System.out.println("Game Manager thinks it is " + gameManager.getCurrentPlayer().getColor() + " 's Turn");
             boolean moveSuccessful = board.handleMove(move, gameManager, false);
             // System.out.println("Move Attempted");
             if (moveSuccessful) {
@@ -574,36 +609,60 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
             }
         } 
 
-    public void onMoveMade() {
-        if (this.board == null) {
-            System.err.println("Error: ChessBoard is not initialized. AntiChessLocation");
-            return;
-        }
+        public void onMoveMade() {
+            if (this.board == null) {
+                System.err.println("Error: ChessBoard is not initialized.");
+                return;
+            }
 
-        // Update the UI and game state after a move is made
-        Piece [][] boardArray = this.board.getBoard();
-        // System.out.println("Move Made");
-        gameManager.getCurrentPlayer().switchTurn();
-        if (isWhiteTurn) {
-            if (whitePlayer.isBot()) {
-                whitePlayer.makeBotMove(boardArray);
-            } else {
-                if (!isBotGame) {
-                    flipBoard();
-                }
+            int turnNumber = gameManager.getTurnNumber();
+            Piece.Color botColor = gameManager.getCurrentPlayer().getColor();
+            // Shift skip pattern based on bot color
+            int skipOffset = (botColor == Piece.Color.WHITE) ? 4 : 5;
+
+            if (selectedBotProfile != null  &&
+            "Skip Every 5th Turn".equals(selectedBotProfile.wildCard) &&
+            gameManager.getCurrentPlayer().isBot() &&
+            (turnNumber == skipOffset || (turnNumber > skipOffset && (turnNumber - skipOffset) % 5 == 0)) &&
+            gameManager.getCurrentPlayer().isBot()) {
+                gameManager.switchTurn();
+                gameManager.incrementTurnNumber();  // 🔁 still need to increment
+                skipJustHappened = true;
+                isWhiteTurn = !isWhiteTurn;
+                return;
             }
-        } else if (!isWhiteTurn) {
-            if (blackPlayer.isBot()) {
-                blackPlayer.makeBotMove(boardArray);
-                // System.out.println(isWhiteTurn);
+        
+            // Only increment the turn number if this was a real move
+            if (!skipJustHappened) {
+                gameManager.incrementTurnNumber();
             } else {
-                if (!isBotGame) {
+                // System.out.println("Skipping turn number increment due to prior skip");
+                skipJustHappened = false; // Reset flag
+            }
+        
+            // Always switch turn regardless of skip or not
+            gameManager.getCurrentPlayer().switchTurn();
+        
+            // Sync UI flag to actual game state
+            isWhiteTurn = (gameManager.getCurrentPlayer().getColor() == Piece.Color.WHITE);
+        
+            // Update board
+            Piece[][] boardArray = this.board.getBoard();
+        
+            if (isWhiteTurn) {
+                if (whitePlayer.isBot()) {
+                    whitePlayer.makeBotMove(boardArray);
+                } else if (!isBotGame) {
                     flipBoard();
                 }
-                // Wait for human input
+            } else {
+                if (blackPlayer.isBot()) {
+                    blackPlayer.makeBotMove(boardArray);
+                } else if (!isBotGame) {
+                    flipBoard();
+                }
             }
         }
-    }
 
     private void restartGame() {
         // Close the current game window properly
@@ -618,6 +677,8 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         selectedSquare = null; // Reset selected square
         isBoardFlipped = false; // Reset board orientation
         isBotGame = false; // Ensure correct bot behavior
+
+        gameManager.resetTurnNumber(); // 👈 add here
     
         // Ensure UI resets correctly
         tableModel.setRowCount(0); // Clear move history
@@ -775,6 +836,27 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         JDialog botDialog = new JDialog((Frame) null, "Choose a Bot", true);
         botDialog.setLayout(new BorderLayout());
     
+        JPanel listPanel = new JPanel(new GridLayout(0, 1, 10, 10));
+        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
+    
+        JLabel avatarPreview = new JLabel();
+        avatarPreview.setHorizontalAlignment(SwingConstants.CENTER);
+        avatarPreview.setPreferredSize(new Dimension(100, 100));
+    
+        JTextArea infoBox = new JTextArea();
+        infoBox.setEditable(false);
+        infoBox.setWrapStyleWord(true);
+        infoBox.setLineWrap(true);
+        infoBox.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        infoBox.setMargin(new Insets(10, 10, 10, 10));
+    
+        JButton playButton = new JButton("Play");
+        playButton.setEnabled(false);
+    
+        final BotLogic.BotType[] selectedType = {null};
+        final BotProfile[] selectedProfile = {null};
+    
+        // === PREDEFINED BOTS (using BotType) ===
         String[] botNames = {"Mark", "Levi", "Virgil", "Darwin", "Randy"};
         BotLogic.BotType[] botTypes = {
             BotLogic.BotType.SWEATY,
@@ -798,25 +880,6 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
             "/images/profiles/randy.png"
         };
     
-        JPanel listPanel = new JPanel(new GridLayout(botNames.length, 1, 10, 10));
-        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
-    
-        JLabel avatarPreview = new JLabel();
-        avatarPreview.setHorizontalAlignment(SwingConstants.CENTER);
-        avatarPreview.setPreferredSize(new Dimension(100, 100));
-    
-        JTextArea infoBox = new JTextArea();
-        infoBox.setEditable(false);
-        infoBox.setWrapStyleWord(true);
-        infoBox.setLineWrap(true);
-        infoBox.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        infoBox.setMargin(new Insets(10, 10, 10, 10));
-    
-        JButton playButton = new JButton("Play");
-        playButton.setEnabled(false);
-    
-        final BotLogic.BotType[] selected = {null};
-    
         for (int i = 0; i < botNames.length; i++) {
             String name = botNames[i];
             BotLogic.BotType type = botTypes[i];
@@ -826,10 +889,11 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
             JButton botButton = new JButton(name);
             botButton.setHorizontalAlignment(SwingConstants.LEFT);
             botButton.addActionListener(e -> {
-                selected[0] = type;
+                selectedType[0] = type;
+                selectedProfile[0] = null;  // clear any custom selection
                 playButton.setEnabled(true);
                 infoBox.setText(description);
-    
+                // Load the corresponding avatar image
                 ImageIcon icon = new ImageIcon(getClass().getResource(avatarPath));
                 Image scaled = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
                 avatarPreview.setIcon(new ImageIcon(scaled));
@@ -837,23 +901,208 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
             listPanel.add(botButton);
         }
     
+        // === Label separator for custom bots ===
+        listPanel.add(new JLabel("─ Custom Bots ─"));
+    
+        // === JSON CUSTOM BOTS FROM FILES ===
+        File[] botFiles = new File("bots").listFiles((dir, name) -> name.endsWith(".json"));
+        if (botFiles != null) {
+            for (File file : botFiles) {
+                try {
+                    BotProfile profile = BotProfileLoader.loadBotProfile(file.getAbsolutePath());
+                    JButton customBotButton = new JButton(profile.botName);
+                    customBotButton.setHorizontalAlignment(SwingConstants.LEFT);
+                    customBotButton.addActionListener(e -> {
+                        selectedProfile[0] = profile;
+                        selectedType[0] = null;
+                        playButton.setEnabled(true);
+    
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("🤖 ").append(profile.botName).append(" by ").append(profile.authorName).append("\n\n");
+                        if (profile.capturePrioritization != null && !profile.capturePrioritization.isEmpty()) {
+                            sb.append("🎯 Capture Strategy:\n");
+                            for (String s : profile.capturePrioritization) {
+                                sb.append("- ").append(s).append("\n");
+                            }
+                        }
+                        if (profile.pawnBehavior != null && !profile.pawnBehavior.isEmpty()) {
+                            sb.append("\n♟️ Pawn Behavior:\n");
+                            for (String s : profile.pawnBehavior) {
+                                sb.append("- ").append(s).append("\n");
+                            }
+                        }
+                        if (profile.forcedMoveStrategy != null && !profile.forcedMoveStrategy.isEmpty()) {
+                            sb.append("\n⚔️ Forced Move Logic:\n");
+                            for (String s : profile.forcedMoveStrategy) {
+                                sb.append("- ").append(s).append("\n");
+                            }
+                        }
+                        if (profile.wildCard != null) {
+                            sb.append("\n🎲 Wild Card: ").append(profile.wildCard);
+                        }
+                        infoBox.setText(sb.toString());
+                        
+                        // Set default avatar for JSON/custom bots
+                        ImageIcon icon = new ImageIcon(getClass().getResource("/images/profiles/defaultBot.png"));
+                        Image scaled = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+                        avatarPreview.setIcon(new ImageIcon(scaled));
+                    });
+                    listPanel.add(customBotButton);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    
+        // === NEW: Create New Custom Bot Option ===
+        JButton createCustomBotButton = new JButton();
+        createCustomBotButton.addActionListener(e -> {
+            JTextField botNameField = new JTextField();
+            JTextField authorField = new JTextField();
+        
+            // Custom piece values
+            JTextField pawnValue = new JTextField("1");
+            JTextField knightValue = new JTextField("3");
+            JTextField bishopValue = new JTextField("3");
+            JTextField rookValue = new JTextField("5");
+            JTextField queenValue = new JTextField("9");
+            JTextField kingValue = new JTextField("0");
+        
+            // Dropdowns for strategic incentives
+            String[] captureOptions = {
+                "Prefer capturing higher-valued pieces",
+                "Prefer capturing to maximize mobility",
+                "Capture only when forced"
+            };
+            JComboBox<String> captureDropdown = new JComboBox<>(captureOptions);
+        
+            String[] pawnOptions = {
+                "Prefer pushing pawns early",
+                "Delay pawn moves for later",
+                "Prioritize promoting pawns"
+            };
+            JComboBox<String> pawnDropdown = new JComboBox<>(pawnOptions);
+        
+            String[] forcedMoveOptions = {
+                "Find the move that reduces material fastest",
+                "Maximize positional advantage even when forced",
+                "Try to create more forced moves for the opponent"
+            };
+            JComboBox<String> forcedDropdown = new JComboBox<>(forcedMoveOptions);
+        
+            String[] wildCards = {
+                "",
+                "Randomizer",
+                "Newbie",
+                "Shortened Lookahead",
+                "Skip Every 5th Turn",
+                "No Queen Moves",
+                "Two-Second Decision Limit"
+            };
+            JComboBox<String> wildCardDropdown = new JComboBox<>(wildCards);
+        
+            Object[] message = {
+                "Bot Name:", botNameField,
+                "Author:", authorField,
+                "Piece Values:",
+                "Pawn:", pawnValue,
+                "Knight:", knightValue,
+                "Bishop:", bishopValue,
+                "Rook:", rookValue,
+                "Queen:", queenValue,
+                "King:", kingValue,
+                "Capture Prioritization:", captureDropdown,
+                "Pawn Behavior:", pawnDropdown,
+                "Forced Move Strategy:", forcedDropdown,
+                "Wild Card:", wildCardDropdown
+            };
+        
+            int option = JOptionPane.showConfirmDialog(null, message, "Create Custom Bot", JOptionPane.OK_CANCEL_OPTION);
+            if (option == JOptionPane.OK_OPTION) {
+                BotProfile newProfile = new BotProfile();
+                newProfile.botName = botNameField.getText().trim();
+                newProfile.authorName = authorField.getText().trim();
+                newProfile.capturePrioritization = List.of((String) captureDropdown.getSelectedItem());
+                newProfile.pawnBehavior = List.of((String) pawnDropdown.getSelectedItem());
+                newProfile.forcedMoveStrategy = List.of((String) forcedDropdown.getSelectedItem());
+        
+                String wild = (String) wildCardDropdown.getSelectedItem();
+                newProfile.wildCard = (wild == null || wild.isBlank()) ? null : wild;
+        
+                // Add piece values
+                Map<String, Integer> values = new HashMap<>();
+                try {
+                    values.put("Pawn", Integer.parseInt(pawnValue.getText().trim()));
+                    values.put("Knight", Integer.parseInt(knightValue.getText().trim()));
+                    values.put("Bishop", Integer.parseInt(bishopValue.getText().trim()));
+                    values.put("Rook", Integer.parseInt(rookValue.getText().trim()));
+                    values.put("Queen", Integer.parseInt(queenValue.getText().trim()));
+                    values.put("King", Integer.parseInt(kingValue.getText().trim()));
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Please enter valid numeric values for each piece.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                newProfile.pieceValues = values;
+        
+                selectedProfile[0] = newProfile;
+                selectedType[0] = null;
+                playButton.setEnabled(true);
+        
+                StringBuilder sb = new StringBuilder();
+                sb.append("🤖 ").append(newProfile.botName).append(" by ").append(newProfile.authorName).append("\n");
+                sb.append("Piece Values: ").append(newProfile.pieceValues).append("\n");
+                sb.append("Capture Strategy: ").append(newProfile.capturePrioritization).append("\n");
+                sb.append("Pawn Behavior: ").append(newProfile.pawnBehavior).append("\n");
+                sb.append("Forced Move Strategy: ").append(newProfile.forcedMoveStrategy).append("\n");
+                if (newProfile.wildCard != null) {
+                    sb.append("Wild Card: ").append(newProfile.wildCard).append("\n");
+                }
+                infoBox.setText(sb.toString());
+        
+                ImageIcon icon = new ImageIcon(getClass().getResource("/images/profiles/defaultBot.png"));
+                Image scaled = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+                avatarPreview.setIcon(new ImageIcon(scaled));
+            }
+        });    
+        listPanel.add(createCustomBotButton);
+    
         rightPanel.add(avatarPreview, BorderLayout.NORTH);
         rightPanel.add(new JScrollPane(infoBox), BorderLayout.CENTER);
     
         playButton.addActionListener(e -> {
-            if (selected[0] != null) {
-                botType = selected[0];
-                botDialog.dispose();
+            if (selectedProfile[0] != null) {
+                selectedBotProfile = selectedProfile[0];
+                botType = null; // use custom bot config
+            } else if (selectedType[0] != null) {
+                botType = selectedType[0];
+                selectedBotProfile = null; // using a predefined bot
             }
+            botDialog.dispose();
         });
     
         botDialog.add(listPanel, BorderLayout.WEST);
         botDialog.add(rightPanel, BorderLayout.CENTER);
         botDialog.add(playButton, BorderLayout.SOUTH);
     
-        botDialog.setSize(600, 350);
+        botDialog.setSize(650, 450);
         botDialog.setLocationRelativeTo(null);
         botDialog.setVisible(true);
     }
     
+    /**
+ * Helper method to parse comma separated values into a List of Strings.
+ */
+    private List<String> parseList(String input) {
+        List<String> list = new ArrayList<>();
+        if (input == null || input.trim().isEmpty()) {
+            return list;
+        }
+        String[] parts = input.split(",");
+        for (String part : parts) {
+            if (!part.trim().isEmpty()) {
+                list.add(part.trim());
+            }
+        }
+        return list;
+    }
 }
