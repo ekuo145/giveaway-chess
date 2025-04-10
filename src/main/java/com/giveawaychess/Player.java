@@ -144,7 +144,7 @@ public class Player {
         if (!isBot || botLogic == null) return;
 
         if (botLogic.shouldSkipTurn()) {
-            // System.out.println("Bot skips turn (verified at top).");
+            System.out.println("Bot skips turn (verified at top).");
             ui.updateBotDialogue("Skipping this one...");
             ui.onMoveMade();
             return;
@@ -168,7 +168,6 @@ public class Player {
                 ui.updateBoard(board);
                 ui.getBoardPanel().revalidate();
                 ui.getBoardPanel().repaint();
-
     
                 // Determine post-move dialogue
                 DialogueKey responseKey;
@@ -184,6 +183,7 @@ public class Player {
     
                 String response = DialogueKey.getBotMessage(botLogic.botType, responseKey);
                 ui.updateBotDialogue(response);
+                gameManager.incrementIfWhiteBot(this);
                 }
         });
     
@@ -194,5 +194,13 @@ public class Player {
     public boolean isNewbie() {
         return profile != null && "Newbie".equals(profile.wildCard);
     }
+
+    public BotProfile getProfile() {
+        return profile;
+    }
+    
+    public BotLogic.BotType getBotType() {
+        return (botLogic != null) ? botLogic.botType : null;
+    }    
     
 }

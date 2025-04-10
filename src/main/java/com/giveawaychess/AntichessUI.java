@@ -28,6 +28,8 @@ public class AntichessUI {
     private boolean showLegalMoves = true;
     private boolean skipJustHappened = false;
 
+    private Timer botVsBotTimer;
+
 
     private JLabel botDialogueLabel;
 
@@ -112,7 +114,7 @@ public class AntichessUI {
         this.board = new ChessBoard(this, gameManager);
     
         // Ask game mode
-        String[] options = {"Play against Bot", "Play against Human"};
+        String[] options = {"Play against Bot", "Play against Human", "Bot vs Bot"};
         int choice = JOptionPane.showOptionDialog(null, "Choose your opponent:", "Game Setup",
                 JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
     
@@ -141,8 +143,46 @@ public class AntichessUI {
                     : new Player(Piece.Color.WHITE, true, board, botType, gameManager);
                 blackPlayer = new Player(Piece.Color.BLACK, false, board, (BotType) null, gameManager);
                 whitePlayer.setUI(this);
-            }
-    
+            } 
+        } else if (choice == 2) { // 🤖🤖 BOT vs BOT
+            isBotGame = true;
+        
+            // 1. Choose white bot
+            JOptionPane.showMessageDialog(null, "Choose the **White** Bot");
+            showBotSelectionDialog();
+            BotProfile whiteBotProfile = selectedBotProfile;
+            BotType whiteBotType = botType;
+        
+            // Reset selection
+            selectedBotProfile = null;
+            botType = null;
+        
+            // 2. Choose black bot
+            JOptionPane.showMessageDialog(null, "Choose the **Black** Bot");
+            showBotSelectionDialog();
+            BotProfile blackBotProfile = selectedBotProfile;
+            BotType blackBotType = botType;
+        
+            // Assign both as bots
+            whitePlayer = (whiteBotProfile != null)
+                ? new Player(Piece.Color.WHITE, true, board, whiteBotProfile, gameManager)
+                : new Player(Piece.Color.WHITE, true, board, whiteBotType, gameManager);
+        
+            blackPlayer = (blackBotProfile != null)
+                ? new Player(Piece.Color.BLACK, true, board, blackBotProfile, gameManager)
+                : new Player(Piece.Color.BLACK, true, board, blackBotType, gameManager);
+        
+            whitePlayer.setUI(this);
+            blackPlayer.setUI(this);
+        
+            // Optional: auto-start loop of bot moves
+            botVsBotTimer = new Timer(1200, e -> {
+                Player currentPlayer = gameManager.getCurrentPlayer();
+                if (currentPlayer.isBot() && !board.isGameOver()) {
+                    currentPlayer.makeBotMove(board.getBoard());
+                }
+            });
+            botVsBotTimer.start();
         } else { // 👥 HUMAN vs HUMAN
             isBotGame = false;
             pieceColor = Piece.Color.WHITE; // Default UI color
@@ -188,68 +228,37 @@ public class AntichessUI {
         JPanel topPanel = new JPanel(new BorderLayout());
 
         if (isBotGame) {
-            String botDisplayName;
-            ImageIcon avatarIcon;
-            if (selectedBotProfile != null) {
-                botDisplayName = selectedBotProfile.botName + " (Custom)";
-                avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/defaultBot.png"));
-            } else if (botType != null) {
-            switch (botType) {
-                case RANDOM -> {
-                    botDisplayName = "Randy (800)";
-                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Randy.png"));
-                }
-                case AGGRESSIVE -> {
-                    botDisplayName = "Darwin (1200)";
-                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Darwin.png"));
-                }
-                case DEFENSIVE -> {
-                    botDisplayName = "Virgil (1000)";
-                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Virgil.png"));
-                }
-                case SACRIFICIAL -> {
-                    botDisplayName = "Levi (1100)";
-                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Levi.png"));
-                }
-                case SWEATY -> {
-                    botDisplayName = "Mark (1600)";
-                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Mark.png"));
-                }
-                default -> throw new IllegalArgumentException("Unexpected value: " + botType);
-            };
-        } else {
-            botDisplayName = "Unknown Bot";
-            avatarIcon = new ImageIcon(); // empty placeholder
-        }
+            JPanel botPanelContainer = new JPanel(new BorderLayout());
+            botPanelContainer.setBackground(new Color(50, 50, 50));
         
-            Image scaled = avatarIcon.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
-            JLabel avatar = new JLabel(new ImageIcon(scaled));
-            avatar.setPreferredSize(new Dimension(50, 50));
-            avatar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            boolean bothBots = whitePlayer.isBot() && blackPlayer.isBot();
+            
+            JPanel topRow = new JPanel(new BorderLayout());
+            topRow.setBackground(new Color(50, 50, 50));
         
-            JLabel botName = new JLabel(botDisplayName);
-            botName.setFont(new Font("SansSerif", Font.BOLD, 16));
-            botName.setForeground(Color.WHITE);
+            if (bothBots) {
+                topRow.add(createBotInfoPanel(whitePlayer, "White"), BorderLayout.WEST);
+                topRow.add(createBotInfoPanel(blackPlayer, "Black"), BorderLayout.EAST);
+            } else {
+                topRow.add(createBotInfoPanel(blackPlayer.isBot() ? blackPlayer : whitePlayer, ""), BorderLayout.WEST);
+            }
         
-            botDialogueLabel = new JLabel("The bot is thinking...");
-            botDialogueLabel.setForeground(Color.LIGHT_GRAY);
+            // 🗨️ Add shared dialogue label
+            botDialogueLabel = new JLabel("Bot thinking...", SwingConstants.CENTER);
             botDialogueLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            botDialogueLabel.setForeground(Color.LIGHT_GRAY);
+            botDialogueLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
-            JPanel botTextPanel = new JPanel();
-            botTextPanel.setLayout(new BoxLayout(botTextPanel, BoxLayout.Y_AXIS));
-            botTextPanel.setBackground(new Color(50, 50, 50));
-            botTextPanel.add(botName);
-            botTextPanel.add(botDialogueLabel);
+            JPanel dialogueRow = new JPanel(new BorderLayout());
+            dialogueRow.setBackground(new Color(50, 50, 50));
+            dialogueRow.add(botDialogueLabel, BorderLayout.CENTER);
         
-            JPanel botPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-            botPanel.setBackground(new Color(50, 50, 50));
-            botPanel.add(avatar);
-            botPanel.add(botTextPanel);
+            botPanelContainer.add(topRow, BorderLayout.NORTH);
+            botPanelContainer.add(dialogueRow, BorderLayout.SOUTH);
         
-            topPanel.add(botPanel, BorderLayout.WEST);
+            topPanel.add(botPanelContainer, BorderLayout.NORTH);
         }
         
-
 
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
@@ -692,6 +701,10 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         if (isSimulation) return;  // Don't trigger UI animations if the game ended in a bot simulation
     
         String winnerText = winner.getColor() == Piece.Color.WHITE ? "Black Wins!" : "White Wins!";
+
+        if (botVsBotTimer != null) {
+            botVsBotTimer.stop();
+        }
         
         JLabel winnerLabel = new JLabel(winnerText, SwingConstants.CENTER);
         winnerLabel.setFont(new Font("Arial", Font.BOLD, 40));
@@ -1105,4 +1118,60 @@ private HashMap<String, ImageIcon> pieceImages = new HashMap<>();
         }
         return list;
     }
+
+    private JPanel createBotInfoPanel(Player bot, String labelText) {
+        String botName;
+        ImageIcon avatarIcon;
+    
+        if (bot.getProfile() != null) {
+            botName = bot.getProfile().botName + " (Custom)";
+            avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/defaultBot.png"));
+        } else {
+            switch (bot.getBotType()) {
+                case RANDOM -> {
+                    botName = "Randy (800)";
+                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Randy.png"));
+                }
+                case AGGRESSIVE -> {
+                    botName = "Darwin (1200)";
+                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Darwin.png"));
+                }
+                case DEFENSIVE -> {
+                    botName = "Virgil (1000)";
+                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Virgil.png"));
+                }
+                case SACRIFICIAL -> {
+                    botName = "Levi (1100)";
+                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Levi.png"));
+                }
+                case SWEATY -> {
+                    botName = "Mark (1600)";
+                    avatarIcon = new ImageIcon(getClass().getResource("/images/profiles/Mark.png"));
+                }
+                default -> {
+                    botName = "Unknown Bot";
+                    avatarIcon = new ImageIcon(); // empty
+                }
+            }
+        }
+    
+        JLabel nameLabel = new JLabel((!labelText.isEmpty() ? labelText + ": " : "") + botName);
+        nameLabel.setForeground(Color.WHITE);
+        nameLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+    
+        Image scaled = avatarIcon.getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+        JLabel avatar = new JLabel(new ImageIcon(scaled));
+        avatar.setPreferredSize(new Dimension(50, 50));
+        avatar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    
+        JPanel panel = new JPanel();
+        panel.setBackground(new Color(50, 50, 50));
+        panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+        panel.add(avatar);
+        panel.add(Box.createHorizontalStrut(10));
+        panel.add(nameLabel);
+    
+        return panel;
+    }
+    
 }

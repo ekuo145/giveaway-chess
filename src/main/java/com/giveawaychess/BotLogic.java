@@ -32,7 +32,7 @@ public class BotLogic {
     }
 
     public Move getMove() {
-        System.out.println("Turn: " + gameManager.getTurnNumber() + " | Color: " + gameManager.getCurrentPlayer().getColor());
+        // System.out.println("Turn: " + gameManager.getTurnNumber() + " | Color: " + gameManager.getCurrentPlayer().getColor());
 
         List<Move> possibleMoves = getAllValidMoves(getBotColor());
         if (possibleMoves.isEmpty()) {
@@ -46,7 +46,7 @@ public class BotLogic {
 
         // Handle "Skip Every 5th Turn"
         if (profile != null && "Skip Every 5th Turn".equals(profile.wildCard) && shouldSkipTurn()) {
-            System.out.println("Skipping turn (wild card active)");
+            // System.out.println("Skipping turn (wild card active)");
             return null;  // Treat this as passing the turn
         }
 

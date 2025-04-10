@@ -37,6 +37,12 @@ public class GameManager {
         turnNumber++;
         // System.out.println("✅ Turn number incremented to: " + turnNumber);
     }
+
+    public void incrementIfWhiteBot(Player currentPlayer) {
+        if (currentPlayer.getColor() == Piece.Color.WHITE) {
+            incrementTurnNumber();
+        }
+    }
     
     public void resetTurnNumber() {
         turnNumber = 0;
